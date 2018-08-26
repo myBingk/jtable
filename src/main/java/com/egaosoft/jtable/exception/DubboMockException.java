@@ -8,10 +8,18 @@ package com.egaosoft.jtable.exception;
  */
 public class DubboMockException extends BusinessException {
 
+<<<<<<< Updated upstream
 	private static final long serialVersionUID = -7863457725477476912L;
 	
 	public DubboMockException(int errorCode){
 		super(errorCode);
 	}
+=======
+    private static final long serialVersionUID = -7863457725477476912L;
+
+    public DubboMockException(int errorCode, Exception e) {
+        super(errorCode, e);
+    }
+>>>>>>> Stashed changes
 
 }
