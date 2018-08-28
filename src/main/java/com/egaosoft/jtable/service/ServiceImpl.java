@@ -617,6 +617,7 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
             flow.nextNode();
         }
 
+        RpcContext.getContext().setAttachment(SYSTEM_ID_KEY, RpcContext.getContext().getAttachment(SYSTEM_ID_KEY));
         RpcContext.getContext().setAttachment(FlowActuator.getFlowKey(), FlowActuator.serializeToString(flow));
 
         FlowKit.executeTransactionFlow(node);
