@@ -6,10 +6,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import top.yujiaxin.jfinalplugin.dubbo.core.DubboRpc;
+
 import com.alibaba.dubbo.rpc.service.GenericService;
 import com.jfinal.kit.Kv;
-
-import top.yujiaxin.jfinalplugin.dubbo.core.DubboRpc;
 
 /**
  * 流程工具类
@@ -25,18 +25,14 @@ public class FlowKit {
         if (node == null)
             return;
 
-        GenericService genericService = DubboRpc.receiveService(GenericService.class,
-            Kv.by("interfaceName", node.getClassName()).set("generic", "true").set(node.getServiceConfig()));
-
-        if (node.getArgs().size() != node.getParameterTypes().size()) {
-            throw new RuntimeException("参数值和参数长度不匹配");
-        }
+        GenericService genericService =
+            DubboRpc.receiveService(GenericService.class,
+                Kv.by("interfaceName", node.getClassName()).set("generic", "true").set(node.getServiceConfig()));
 
         /*执行一次数组拷贝操作，防止递归引用*/
         String[] types = node.getParameterTypes().toArray(new String[node.getParameterTypes().size()]);
         types = Arrays.copyOf(types, types.length);
-        Object[] args = node.getArgs().toArray(new Object[node.getArgs().size()]);
-        args = Arrays.copyOf(args, args.length);
+        Object[] args = node.getArgs().toArray(new Object[node.getParameterTypes().size()]);
 
         genericService.$invoke(node.getMethodName(), types, args);
     }

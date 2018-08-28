@@ -30,15 +30,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-<<<<<<< Updated upstream
-=======
     	<groupId>top.yujiaxin</groupId>
     	<artifactId>jfinal-dubbo-plugin</artifactId>
     	<version>1.0.1</version>
     	<scope>provided</scope>
     </dependency>
     <dependency>
->>>>>>> Stashed changes
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.8.2</version>
@@ -56,15 +53,6 @@
 	    <version>1.4.197</version>
 	    <scope>test</scope>
 	</dependency>
-<<<<<<< Updated upstream
-
-	<dependency>
-		<groupId>com.egaosoft</groupId>
-		<artifactId>transaction</artifactId>
-		<version>0.0.1</version>
-	</dependency>
-=======
->>>>>>> Stashed changes
 	<dependency>
 	    <groupId>com.alibaba</groupId>
 	    <artifactId>dubbo</artifactId>

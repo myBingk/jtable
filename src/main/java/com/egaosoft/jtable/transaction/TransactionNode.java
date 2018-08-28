@@ -36,8 +36,9 @@ public class TransactionNode implements Serializable {
     /**
      * @param serviceConfig the serviceConfig to set
      */
-    public void setServiceConfig(Map<String, Object> serviceConfig) {
+    public TransactionNode setServiceConfig(Map<String, Object> serviceConfig) {
         this.serviceConfig = serviceConfig;
+        return this;
     }
 
     /**
@@ -96,17 +97,19 @@ public class TransactionNode implements Serializable {
         this.methodName = methodName;
     }
 
-    public void addParameterType(String parameterType) {
+    public TransactionNode addParameterType(String parameterType) {
         if (null == parameterTypes)
             throw new NullPointerException(
                 "parameterTypes is null,Initialize the parameterTypes before calling the addParameterType method");
         parameterTypes.add(parameterType);
+        return this;
     }
 
-    public void addArg(Object arg) {
+    public TransactionNode addArg(Object arg) {
         if (null == args)
             throw new NullPointerException("args is null ,Initialize the args before calling the addArg method");
         args.add(arg);
+        return this;
     }
 
 }

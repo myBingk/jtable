@@ -65,7 +65,7 @@ public class ServiceFilter implements Filter {
         return result;
     }
 
-    private static boolean hasSystemIdField(Object obj) {
+    public static boolean hasSystemIdField(Object obj) {
         for (Method method : obj.getClass().getMethods()) {
             if (method.getName().equals("setSystemId")) {
                 return true;

@@ -8,19 +8,14 @@ package com.egaosoft.jtable.exception;
  */
 public class ConventionalException extends BusinessException {
 
-<<<<<<< Updated upstream
-	private static final long serialVersionUID = -1646962659817310752L;
-
-	public ConventionalException(int errorCode) {
-		super(errorCode);
-	}
-	
-=======
     private static final long serialVersionUID = -1646962659817310752L;
+
+    public ConventionalException() {
+        super();
+    }
 
     public ConventionalException(int errorCode, Exception e) {
         super(errorCode, e);
     }
 
->>>>>>> Stashed changes
 }

@@ -4,10 +4,6 @@ import java.sql.SQLException;
 
 import com.jfinal.plugin.activerecord.ActiveRecordException;
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 /**
  * 业务异常
  * 
@@ -16,22 +12,11 @@ import com.jfinal.plugin.activerecord.ActiveRecordException;
  */
 public class DatabaseException extends BusinessException {
 
-<<<<<<< Updated upstream
-	private static final long serialVersionUID = -1543126965117436740L;
-	
-	public DatabaseException(int errorCode){
-		super(errorCode);
-	}
-	
-	public DatabaseException(ActiveRecordException e){
-		super(e);
-	}
-	
-	public DatabaseException(SQLException e){
-		super(e);
-	}
-=======
     private static final long serialVersionUID = -1543126965117436740L;
+
+    public DatabaseException() {
+        super();
+    }
 
     public DatabaseException(int errorCode, Exception e) {
         super(errorCode, e);
@@ -44,6 +29,5 @@ public class DatabaseException extends BusinessException {
     public DatabaseException(SQLException e) {
         super(e);
     }
->>>>>>> Stashed changes
 
 }

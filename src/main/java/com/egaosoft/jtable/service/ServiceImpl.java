@@ -2,22 +2,18 @@ package com.egaosoft.jtable.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-<<<<<<< Updated upstream
-=======
 import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
->>>>>>> Stashed changes
 import com.alibaba.dubbo.rpc.RpcContext;
 import com.egaosoft.jtable.core.Table;
+import com.egaosoft.jtable.dubbo.filter.ServiceFilter;
 import com.egaosoft.jtable.exception.BusinessException;
 import com.egaosoft.jtable.transaction.FlowActuator;
-<<<<<<< Updated upstream
-import com.egaosoft.transaction.TransactionFlow;
-=======
 import com.egaosoft.jtable.transaction.FlowKit;
+import com.egaosoft.jtable.transaction.TransactionFlow;
 import com.egaosoft.jtable.transaction.TransactionNode;
->>>>>>> Stashed changes
 import com.jfinal.plugin.activerecord.Model;
 import com.jfinal.plugin.activerecord.Page;
 
@@ -31,316 +27,15 @@ import com.jfinal.plugin.activerecord.Page;
 @SuppressWarnings("rawtypes")
 public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
-<<<<<<< Updated upstream
-	@Override
-	public boolean save(T model) throws BusinessException {
-		boolean result = getTable().save(model);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean saveForAny(Object... args) throws BusinessException {
-		boolean result = getTable().saveForAny(args);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean save(T model, Object... noRepetition) throws BusinessException {
-		boolean result = getTable().save(model, noRepetition);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean save(T model, T noRepetitionMap) throws BusinessException {
-		boolean result = getTable().save(model, noRepetitionMap);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean save(T model, @SuppressWarnings("unchecked") T... models) throws BusinessException {
-		boolean result = getTable().save(model, models);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean save(T model, @SuppressWarnings("unchecked") List<T>... models) throws BusinessException {
-		boolean result = getTable().save(model, models);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean saveAsGroupForAny(@SuppressWarnings("unchecked") List<Object>... args) throws BusinessException {
-		boolean result = getTable().saveAsGroupForAny(args);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean saveAsGroup(List<T> modelList, Object... noRepetition) throws BusinessException {
-		boolean result = getTable().saveAsGroup(modelList, noRepetition);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean saveAsGroup(List<T> modelList, T noRepetitionMap) throws BusinessException {
-		boolean result = getTable().saveAsGroup(modelList, noRepetitionMap);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean saveAsGroup(List<T> modelList) throws BusinessException {
-		boolean result = getTable().saveAsGroup(modelList);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean saveAsGroup(List<T> modelList, @SuppressWarnings("unchecked") List<T>... modelLists) throws BusinessException {
-		boolean result = getTable().saveAsGroup(modelList, modelLists);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean saveAsGroup(List<T> modelList, @SuppressWarnings("unchecked") T... modelLists) throws BusinessException {
-		boolean result = getTable().saveAsGroup(modelList, modelLists);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean deleteForAny(T conditions) throws BusinessException {
-		boolean result = getTable().deleteForAny(conditions);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean delete(T model) throws BusinessException {
-		boolean result = getTable().delete(model);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean delete(T model, @SuppressWarnings("unchecked") T... models) throws BusinessException {
-		boolean result = getTable().delete(model, models);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean delete(T model, @SuppressWarnings("unchecked") List<T>... modelLists) throws BusinessException {
-		boolean result = getTable().delete(model, modelLists);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean delete(Object... primaryKey) throws BusinessException {
-		boolean result = getTable().delete(primaryKey);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean deleteAsGroup(List<T> modelList) throws BusinessException {
-		boolean result = getTable().deleteAsGroup(modelList);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean deleteAsGroup(List<T> modelList, @SuppressWarnings("unchecked") T... models) throws BusinessException {
-		boolean result = getTable().deleteAsGroup(modelList, models);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean deleteAsGroup(List<T> modelList, @SuppressWarnings("unchecked") List<T>... modelLists) throws BusinessException {
-		boolean result = getTable().deleteAsGroup(modelList, modelLists);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-	
-	@Override
-	public boolean deleteAsGroup(Object[]... primaryKeySet) throws BusinessException {
-		boolean result = getTable().deleteAsGroup(primaryKeySet);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	@Deprecated
-	public boolean deleteAll() throws BusinessException {
-		boolean result = getTable().deleteAll();
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean update(T model) throws BusinessException {
-		boolean result = getTable().update(model);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean update(T model, T conditationMap) throws BusinessException {
-		boolean result = getTable().update(model, conditationMap);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean update(T model, @SuppressWarnings("unchecked") T... models) throws BusinessException {
-		boolean result = getTable().update(model, models);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean update(T model, @SuppressWarnings("unchecked") List<T>... models) throws BusinessException {
-		boolean result = getTable().update(model, models);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean updateAsGroup(List<T> modelList) throws BusinessException {
-		boolean result = getTable().updateAsGroup(modelList);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean updateAsGroup(List<T> modelList, T conditationMap) throws BusinessException {
-		boolean result = getTable().updateAsGroup(modelList, conditationMap);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean updateAsGroup(List<T> modelList, @SuppressWarnings("unchecked") T... models) throws BusinessException {
-		boolean result = getTable().updateAsGroup(modelList, models);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public boolean updateAsGroup(List<T> modelList, @SuppressWarnings("unchecked") List<T>... modelLists) throws BusinessException {
-		boolean result = getTable().updateAsGroup(modelList, modelLists);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public T findById(Object... primaryKey) throws BusinessException {
-		T result = getTable().findById(primaryKey);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public T find(T condition) throws BusinessException {
-		T result = getTable().find(condition);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public List<T> findByIdAsGroup(Long[] IdSet) throws BusinessException {
-		List<T> result = getTable().findByIdAsGroup(IdSet);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-	
-	@Override
-	public List<T> findByIdsAsGroup(Long[]... IdSets) throws BusinessException {
-		List<T> result = getTable().findByIdsAsGroup(IdSets);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public List<T> findList() throws BusinessException {
-		List<T> result = getTable().findList();
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public List<T> findList(T condition) throws BusinessException {
-		List<T> result = getTable().findList(condition);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public Page<T> findListInPage(int pageNumber, int pageSize) throws BusinessException {
-		Page<T> result = getTable().findListInPage(pageNumber, pageSize);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public Page<T> findListInPageWithKeywords(int pageNumber, int pageSize, T condition) throws BusinessException {
-		Page<T> result = getTable().findListInPageWithKeywords(pageNumber, pageSize, condition);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public Page<T> findListInPage(int pageNumber, int pageSize, String sortBy, String sortOrder) throws BusinessException {
-		Page<T> result = getTable().findListInPage(pageNumber, pageSize, sortBy, sortOrder);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-
-	@Override
-	public Page<T> findListInPageWithKeywords(int pageNumber, int pageSize, T condition, String sortBy, String sortOrder)
-			throws BusinessException {
-		Page<T> result = getTable().findListInPageWithKeywords(pageNumber, pageSize, condition, sortBy, sortOrder);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-	
-	@Override
-	public int execute(String key, Map<?, ?> data) throws BusinessException {
-		int result = getTable().execute(key, data);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-	
-	@Override
-	public T find(String key, Map<?, ?> data) throws BusinessException {
-		T result = getTable().find(key, data);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-	
-	@Override
-	public List<T> findList(String key, Map<?, ?> data) throws BusinessException {
-		List<T> result = getTable().findList(key, data);
-		FlowActuator.excute((TransactionFlow)FlowActuator.deserializeToFlow(RpcContext.getContext().getAttachment("flow")));
-		return result;
-	}
-	
-	public abstract Table<T> getTable();
-=======
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceImpl.class);
+
+    private static final String SYSTEM_ID_KEY = "systemId";
 
     @Override
     public boolean save(T model) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+        }
         boolean result = getTable().save(model);
         executeNode();
         return result;
@@ -348,6 +43,9 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean saveForAny(Object... args) throws BusinessException {
+        if (isAssignmentAble()) {
+            args = assignment(0, args);
+        }
         boolean result = getTable().saveForAny(args);
         executeNode();
         return result;
@@ -355,6 +53,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean save(T model, Object... noRepetition) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+            noRepetition = assignment(1, noRepetition);
+        }
         boolean result = getTable().save(model, noRepetition);
         executeNode();
         return result;
@@ -362,6 +64,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean save(T model, T noRepetitionMap) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+            noRepetitionMap = assignment(1, noRepetitionMap);
+        }
         boolean result = getTable().save(model, noRepetitionMap);
         executeNode();
         return result;
@@ -369,6 +75,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean saveWithTransaction(T model, Model... models) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+            models = assignment(1, models);
+        }
         boolean result = getTable().saveWithTransaction(model, models);
         executeNode();
         return result;
@@ -377,13 +87,21 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     @Override
     public boolean saveWithTransactionForList(T model, @SuppressWarnings("unchecked") List<? extends Model>... models)
         throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+            models = assignment(1, models);
+        }
         boolean result = getTable().saveWithTransactionForList(model, models);
         executeNode();
         return result;
     }
 
     @Override
-    public boolean saveAsGroupForAny(@SuppressWarnings("unchecked") List<Object>... args) throws BusinessException {
+    @SuppressWarnings("unchecked")
+    public boolean saveAsGroupForAny(List<Object>... args) throws BusinessException {
+        if (isAssignmentAble()) {
+            args = assignment(0, args);
+        }
         boolean result = getTable().saveAsGroupForAny(args);
         executeNode();
         return result;
@@ -391,6 +109,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean saveAsGroup(List<T> modelList, Object... noRepetition) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+            noRepetition = assignment(1, noRepetition);
+        }
         boolean result = getTable().saveAsGroup(modelList, noRepetition);
         executeNode();
         return result;
@@ -398,6 +120,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean saveAsGroup(List<T> modelList, T noRepetitionMap) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+            noRepetitionMap = assignment(1, noRepetitionMap);
+        }
         boolean result = getTable().saveAsGroup(modelList, noRepetitionMap);
         executeNode();
         return result;
@@ -405,6 +131,9 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean saveAsGroup(List<T> modelList) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+        }
         boolean result = getTable().saveAsGroup(modelList);
         executeNode();
         return result;
@@ -413,13 +142,31 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     @Override
     public boolean saveAsGroupWithTransactionForList(List<T> modelList,
         @SuppressWarnings("unchecked") List<? extends Model>... modelLists) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelLists = assignment(0, modelLists);
+            modelLists = assignment(1, modelLists);
+        }
         boolean result = getTable().saveAsGroupWithTransactionForList(modelList, modelLists);
         executeNode();
         return result;
     }
 
     @Override
+    public boolean saveAsGroupWithTransaction(List<T> modelList, Model... models) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+            models = assignment(1, models);
+        }
+        boolean result = getTable().saveAsGroupWithTransaction(modelList, models);
+        executeNode();
+        return result;
+    }
+
+    @Override
     public boolean deleteForAny(T conditions) throws BusinessException {
+        if (isAssignmentAble()) {
+            conditions = assignment(0, conditions);
+        }
         boolean result = getTable().deleteForAny(conditions);
         executeNode();
         return result;
@@ -427,6 +174,9 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean delete(T model) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+        }
         boolean result = getTable().delete(model);
         executeNode();
         return result;
@@ -434,6 +184,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean deleteWithTransaction(T model, Model... models) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+            models = assignment(1, models);
+        }
         boolean result = getTable().delete(model, models);
         executeNode();
         return result;
@@ -442,6 +196,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     @Override
     public boolean deleteWithTransactionForList(T model,
         @SuppressWarnings("unchecked") List<? extends Model>... modelLists) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+            modelLists = assignment(1, modelLists);
+        }
         boolean result = getTable().deleteWithTransactionForList(model, modelLists);
         executeNode();
         return result;
@@ -449,6 +207,9 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean delete(Object... primaryKey) throws BusinessException {
+        if (isAssignmentAble()) {
+            primaryKey = assignment(0, primaryKey);
+        }
         boolean result = getTable().delete(primaryKey);
         executeNode();
         return result;
@@ -456,6 +217,9 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean deleteAsGroup(List<T> modelList) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+        }
         boolean result = getTable().deleteAsGroup(modelList);
         executeNode();
         return result;
@@ -463,6 +227,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean deleteAsGroupWithTransaction(List<T> modelList, Model... models) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+            models = assignment(1, models);
+        }
         boolean result = getTable().deleteAsGroupWithTransaction(modelList, models);
         executeNode();
         return result;
@@ -471,6 +239,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     @Override
     public boolean deleteAsGroupWithTransactionForList(List<T> modelList,
         @SuppressWarnings("unchecked") List<? extends Model>... modelLists) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+            modelLists = assignment(1, modelLists);
+        }
         boolean result = getTable().deleteAsGroupWithTransactionForList(modelList, modelLists);
         executeNode();
         return result;
@@ -478,6 +250,9 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean deleteAsGroup(Object[]... primaryKeySet) throws BusinessException {
+        if (isAssignmentAble()) {
+            primaryKeySet = assignment(0, primaryKeySet);
+        }
         boolean result = getTable().deleteAsGroup(primaryKeySet);
         executeNode();
         return result;
@@ -493,6 +268,9 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean update(T model) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+        }
         boolean result = getTable().update(model);
         executeNode();
         return result;
@@ -500,6 +278,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean update(T model, T conditationMap) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+            conditationMap = assignment(1, conditationMap);
+        }
         boolean result = getTable().update(model, conditationMap);
         executeNode();
         return result;
@@ -507,14 +289,23 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean updateWithTransaction(T model, Model... models) throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+            models = assignment(1, models);
+        }
         boolean result = getTable().updateWithTransaction(model, models);
         executeNode();
         return result;
     }
 
     @Override
-    public boolean updateWithTransactionForList(T model, @SuppressWarnings("unchecked") List<? extends Model>... models)
-        throws BusinessException {
+    public boolean
+        updateWithTransactionForList(T model, @SuppressWarnings("unchecked") List<? extends Model>... models)
+            throws BusinessException {
+        if (isAssignmentAble()) {
+            model = assignment(0, model);
+            models = assignment(1, models);
+        }
         boolean result = getTable().updateWithTransactionForList(model, models);
         executeNode();
         return result;
@@ -522,6 +313,9 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean updateAsGroup(List<T> modelList) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+        }
         boolean result = getTable().updateAsGroup(modelList);
         executeNode();
         return result;
@@ -529,6 +323,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean updateAsGroup(List<T> modelList, T conditationMap) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+            conditationMap = assignment(1, conditationMap);
+        }
         boolean result = getTable().updateAsGroup(modelList, conditationMap);
         executeNode();
         return result;
@@ -536,6 +334,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     @Override
     public boolean updateAsGroupWithTransaction(List<T> modelList, Model... models) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+            models = assignment(1, models);
+        }
         boolean result = getTable().updateAsGroupWithTransaction(modelList, models);
         executeNode();
         return result;
@@ -544,6 +346,10 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     @Override
     public boolean updateAsGroupWithTransactionForList(List<T> modelList,
         @SuppressWarnings("unchecked") List<? extends Model>... modelLists) throws BusinessException {
+        if (isAssignmentAble()) {
+            modelList = assignment(0, modelList);
+            modelLists = assignment(1, modelLists);
+        }
         boolean result = getTable().updateAsGroupWithTransactionForList(modelList, modelLists);
         executeNode();
         return result;
@@ -552,56 +358,48 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     @Override
     public T findById(Object... primaryKey) throws BusinessException {
         T result = getTable().findById(primaryKey);
-        executeNode();
         return result;
     }
 
     @Override
     public T find(T condition) throws BusinessException {
         T result = getTable().find(condition);
-        executeNode();
         return result;
     }
 
     @Override
     public List<T> findByIdAsGroup(Long[] IdSet) throws BusinessException {
         List<T> result = getTable().findByIdAsGroup(IdSet);
-        executeNode();
         return result;
     }
 
     @Override
     public List<T> findByIdsAsGroup(Long[]... IdSets) throws BusinessException {
         List<T> result = getTable().findByIdsAsGroup(IdSets);
-        executeNode();
         return result;
     }
 
     @Override
     public List<T> findList() throws BusinessException {
         List<T> result = getTable().findList();
-        executeNode();
         return result;
     }
 
     @Override
     public List<T> findList(T condition) throws BusinessException {
         List<T> result = getTable().findList(condition);
-        executeNode();
         return result;
     }
 
     @Override
     public Page<T> findListInPage(int pageNumber, int pageSize) throws BusinessException {
         Page<T> result = getTable().findListInPage(pageNumber, pageSize);
-        executeNode();
         return result;
     }
 
     @Override
     public Page<T> findListInPageWithKeywords(int pageNumber, int pageSize, T condition) throws BusinessException {
         Page<T> result = getTable().findListInPageWithKeywords(pageNumber, pageSize, condition);
-        executeNode();
         return result;
     }
 
@@ -609,79 +407,232 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     public Page<T> findListInPage(int pageNumber, int pageSize, String sortBy, String sortOrder)
         throws BusinessException {
         Page<T> result = getTable().findListInPage(pageNumber, pageSize, sortBy, sortOrder);
-        executeNode();
         return result;
     }
 
     @Override
-    public Page<T> findListInPageWithKeywords(int pageNumber, int pageSize, T condition, String sortBy,
-        String sortOrder) throws BusinessException {
+    public Page<T>
+        findListInPageWithKeywords(int pageNumber, int pageSize, T condition, String sortBy, String sortOrder)
+            throws BusinessException {
         Page<T> result = getTable().findListInPageWithKeywords(pageNumber, pageSize, condition, sortBy, sortOrder);
-        executeNode();
         return result;
     }
 
     @Override
     public int execute(String key, Map<?, ?> data) throws BusinessException {
         int result = getTable().execute(key, data);
-        executeNode();
         return result;
     }
 
     @Override
     public T find(String key, Map<?, ?> data) throws BusinessException {
         T result = getTable().find(key, data);
-        executeNode();
         return result;
     }
 
     @Override
     public List<T> findList(String key, Map<?, ?> data) throws BusinessException {
         List<T> result = getTable().findList(key, data);
-        executeNode();
         return result;
     }
 
+    public boolean isAssignmentAble() {
+
+        TransactionFlow flow = getFlow();
+
+        if (flow != null) {
+            int start = flow.getIndex();
+            int end = flow.getFlowNodes().size();
+
+            if (start <= end) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void keepParam() {
+        TransactionFlow flow = getFlow();
+
+        if (null == flow) {
+            return;
+        }
+        int start = flow.getIndex();
+        int end = flow.getFlowNodes().size();
+
+        for (int index = start; index < end; index++) {
+            String key = FlowActuator.getNodeKey() + index;
+            RpcContext.getContext().setAttachment(key, RpcContext.getContext().getAttachment(key));
+        }
+    }
+
+    private boolean isHead() {
+        String isHead = RpcContext.getContext().getAttachment(FlowActuator.getIsHead());
+        if (isHead != null && "true".equals(isHead)) {
+            return true;
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private T assignment(int argsIndex, T arg) {
+
+        TransactionFlow flow = getFlow();
+        int indexNow = flow.getIndex();
+
+        if (isHead()) {
+            return arg;
+        }
+
+        Object attachArgs = RpcContext.getContext().getAttachment(FlowActuator.getNodeKey() + indexNow);
+        if (attachArgs != null) {
+            T rarg = (T)((List<?>)FlowActuator.deserializeToNode(String.valueOf(attachArgs))).toArray()[argsIndex];
+
+            String systemId = RpcContext.getContext().getAttachment(SYSTEM_ID_KEY);
+            if (systemId != null) {
+                boolean hasSystemId = ServiceFilter.hasSystemIdField(rarg);
+                if (hasSystemId) {
+                    rarg.put(SYSTEM_ID_KEY, systemId);
+                }
+            }
+
+            return rarg;
+        }
+
+        return arg;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <A> A[] assignment(int argsIndex, A... args) {
+
+        TransactionFlow flow = getFlow();
+        int indexNow = flow.getIndex();
+
+        if (isHead()) {
+            return args;
+        }
+
+        String systemId = RpcContext.getContext().getAttachment(SYSTEM_ID_KEY);
+        if (systemId != null) {
+            for (A arg : args) {
+                if (arg == null) {
+                    continue;
+                }
+                if (arg.getClass().isArray()) {
+                    for (Object subArg : (Object[])arg) {
+                        if (subArg == null) {
+                            continue;
+                        }
+                        if (subArg instanceof Model) {
+                            if (ServiceFilter.hasSystemIdField(arg)) {
+                                ((Model)subArg).put("systemId", systemId);
+                            }
+                        }
+                    }
+                }
+                if (arg instanceof List) {
+                    for (Object subArg : (List)arg) {
+                        if (subArg == null) {
+                            continue;
+                        }
+                        if (subArg instanceof Model) {
+                            if (ServiceFilter.hasSystemIdField(subArg)) {
+                                ((Model)subArg).put("systemId", systemId);
+                            }
+                        }
+                    }
+                }
+                if (arg instanceof Model) {
+                    if (ServiceFilter.hasSystemIdField(arg)) {
+                        ((Model)arg).put("systemId", systemId);
+                    }
+                }
+            }
+        }
+
+        Object attachArgs = RpcContext.getContext().getAttachment(FlowActuator.getNodeKey() + indexNow);
+        if (attachArgs != null) {
+            return (A[])((List<?>)FlowActuator.deserializeToNode(String.valueOf(attachArgs))).toArray()[argsIndex];
+        }
+
+        return args;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<T> assignment(int argsIndex, List<T> arg) {
+
+        TransactionFlow flow = getFlow();
+        int indexNow = flow.getIndex();
+
+        if (isHead()) {
+            return arg;
+        }
+
+        Object attachArgs = RpcContext.getContext().getAttachment(FlowActuator.getNodeKey() + indexNow);
+        if (attachArgs != null) {
+            List<T> argsList =
+                (List<T>)((List<?>)FlowActuator.deserializeToNode(String.valueOf(attachArgs))).toArray()[argsIndex];
+            String systemId = RpcContext.getContext().getAttachment(SYSTEM_ID_KEY);
+            if (systemId != null) {
+                for (T t : argsList) {
+                    boolean hasSystemId = ServiceFilter.hasSystemIdField(t);
+                    if (hasSystemId) {
+                        t.put(SYSTEM_ID_KEY, systemId);
+                    }
+                }
+            }
+            return argsList;
+        }
+
+        return arg;
+    }
+
     private void executeNode() {
-        String index = RpcContext.getContext().getAttachment(FlowActuator.getNodeIndex());
-        if (index == null) {
-            return;
-        }
-        String endIndex = RpcContext.getContext().getAttachment(FlowActuator.getNodeIndexMax());
-        if (endIndex == null) {
-            return;
-        }
-        if (index.compareTo(endIndex) == 0 || index.compareTo(endIndex) == 1) {
+
+        TransactionFlow flow = getFlow();
+        keepParam();
+
+        if (flow == null) {
             return;
         }
 
-        int next = Integer.parseInt(index) + 1;
-        int end = Integer.parseInt(endIndex);
+        String flowName = flow.getName();
 
-        for (int i = next; i < end; i++) {
-            String nodeKey = FlowActuator.getNodeKey() + i;
-            RpcContext.getContext().setAttachment(nodeKey, RpcContext.getContext().getAttachment(nodeKey));
-        }
-
-        String flowName = RpcContext.getContext().getAttachment(FlowActuator.getFlowName());
-
-        TransactionNode node = (TransactionNode)FlowActuator
-            .deserializeToNode(RpcContext.getContext().getAttachment(FlowActuator.getNodeKey() + index));
-
-        if ((next - 1) == 0) {
+        if (flow.getIndex() == 0) {
             LOGGER.info("流程[" + flowName + "]开始执行。");
         }
-        if (next > end) {
+
+        if (flow.isFinish()) {
             LOGGER.info("流程[" + flowName + "]执行结束,结束时间:" + System.currentTimeMillis());
             return;
         }
+        TransactionNode node = flow.getFlowNodes().get(flow.getIndex());
         String method = node.getClassName() + "." + node.getMethodName();
-        LOGGER.info("流程[" + flowName + "]-节点[" + index + "]，方法[" + method + "]执行时间:" + System.currentTimeMillis());
+        LOGGER.info("流程[" + flowName + "]-节点[" + flow.getIndex() + "]，方法[" + method + "]执行时间:"
+            + System.currentTimeMillis());
+
+        if (isHead()) {
+            RpcContext.getContext().setAttachment(FlowActuator.getIsHead(), "false");
+        } else {
+            flow.nextNode();
+        }
+
+        RpcContext.getContext().setAttachment(FlowActuator.getFlowKey(), FlowActuator.serializeToString(flow));
 
         FlowKit.executeTransactionFlow(node);
     }
 
+    private TransactionFlow getFlow() {
+
+        Optional<String> flowString =
+            Optional.ofNullable(RpcContext.getContext().getAttachment(FlowActuator.getFlowKey()));
+        if (flowString.isPresent()) {
+            TransactionFlow flow = (TransactionFlow)FlowActuator.deserializeToNode(flowString.get());
+            return flow;
+        }
+        return null;
+    }
+
     public abstract Table<T> getTable();
->>>>>>> Stashed changes
 
 }
