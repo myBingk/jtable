@@ -20,7 +20,7 @@ import com.jfinal.kit.Kv;
 public class FlowKit {
 
     @SuppressWarnings("unchecked")
-    public static void executeTransactionFlow(TransactionNode node) {
+    public static void executeTransactionFlow(TransactionNode node, Object desiredResult) {
 
         if (node == null)
             return;
@@ -34,7 +34,11 @@ public class FlowKit {
         types = Arrays.copyOf(types, types.length);
         Object[] args = node.getArgs().toArray(new Object[node.getParameterTypes().size()]);
 
-        genericService.$invoke(node.getMethodName(), types, args);
+        Object result = genericService.$invoke(node.getMethodName(), types, args);
+
+        if (result != null && !desiredResult.equals(result)) {
+            throw new RuntimeException("执行结果不是预期的结果，预期结果：" + desiredResult);
+        }
     }
 
     public static TransactionFlow generateTransactionFlow(String name) {

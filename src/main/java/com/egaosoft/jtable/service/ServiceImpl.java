@@ -477,12 +477,12 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     @SuppressWarnings("unchecked")
     private T assignment(int argsIndex, T arg) {
 
-        TransactionFlow flow = getFlow();
-        int indexNow = flow.getIndex();
-
         if (isHead()) {
             return arg;
         }
+
+        TransactionFlow flow = getFlow();
+        int indexNow = flow.getIndex() - 1;
 
         Object attachArgs = RpcContext.getContext().getAttachment(FlowActuator.getNodeKey() + indexNow);
         if (attachArgs != null) {
@@ -505,12 +505,12 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     @SuppressWarnings("unchecked")
     private <A> A[] assignment(int argsIndex, A... args) {
 
-        TransactionFlow flow = getFlow();
-        int indexNow = flow.getIndex();
-
         if (isHead()) {
             return args;
         }
+
+        TransactionFlow flow = getFlow();
+        int indexNow = flow.getIndex() - 1;
 
         String systemId = RpcContext.getContext().getAttachment(SYSTEM_ID_KEY);
         if (systemId != null) {
@@ -561,12 +561,12 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     @SuppressWarnings("unchecked")
     private List<T> assignment(int argsIndex, List<T> arg) {
 
-        TransactionFlow flow = getFlow();
-        int indexNow = flow.getIndex();
-
         if (isHead()) {
             return arg;
         }
+
+        TransactionFlow flow = getFlow();
+        int indexNow = flow.getIndex() - 1;
 
         Object attachArgs = RpcContext.getContext().getAttachment(FlowActuator.getNodeKey() + indexNow);
         if (attachArgs != null) {
@@ -597,7 +597,6 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
         }
 
         String flowName = flow.getName();
-
         if (flow.getIndex() == 0) {
             LOGGER.info("流程[" + flowName + "]开始执行。");
         }
@@ -606,21 +605,22 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
             LOGGER.info("流程[" + flowName + "]执行结束,结束时间:" + System.currentTimeMillis());
             return;
         }
+
         TransactionNode node = flow.getFlowNodes().get(flow.getIndex());
+
+        if (isHead()) {
+            RpcContext.getContext().setAttachment(FlowActuator.getIsHead(), "false");
+        }
+
         String method = node.getClassName() + "." + node.getMethodName();
         LOGGER.info("流程[" + flowName + "]-节点[" + flow.getIndex() + "]，方法[" + method + "]执行时间:"
             + System.currentTimeMillis());
 
-        if (isHead()) {
-            RpcContext.getContext().setAttachment(FlowActuator.getIsHead(), "false");
-        } else {
-            flow.nextNode();
-        }
-
+        flow.nextNode();
         RpcContext.getContext().setAttachment(SYSTEM_ID_KEY, RpcContext.getContext().getAttachment(SYSTEM_ID_KEY));
         RpcContext.getContext().setAttachment(FlowActuator.getFlowKey(), FlowActuator.serializeToString(flow));
 
-        FlowKit.executeTransactionFlow(node);
+        FlowKit.executeTransactionFlow(node, true);
     }
 
     private TransactionFlow getFlow() {
