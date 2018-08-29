@@ -173,20 +173,17 @@ public class Table<T extends Model> implements Service<T> {
     @Override
     public boolean saveWithTransaction(T model, Model... models) throws BusinessException {
         try {
-            return Db.tx(new IAtom() {
+            return Db.tx(() -> {
 
-                @Override
-                public boolean run() throws SQLException {
-                    if (!model.save()) {
-                        throw new SQLException("添加对象失败", "fail", 2102);
-                    }
-                    for (Model model2 : models) {
-                        if (!model2.save()) {
-                            throw new SQLException("添加附加对象失败", "fail", 2106);
-                        }
-                    }
-                    return true;
+                if (!model.save()) {
+                    throw new SQLException("添加对象失败", "fail", 2102);
                 }
+                for (Model model2 : models) {
+                    if (!model2.save()) {
+                        throw new SQLException("添加附加对象失败", "fail", 2106);
+                    }
+                }
+                return true;
 
             });
         } catch (ActiveRecordException e) {
