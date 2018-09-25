@@ -645,7 +645,6 @@ public class Table<T extends Model> implements Service<T> {
     public boolean update(T model, T conditation) throws BusinessException {
         SqlPara sql = accumulate(getUpdateBody(model), getWhereQuery(conditation, null, null));
         try {
-            System.out.println(sql.toString());
             return Db.update(sql) == 1;
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
