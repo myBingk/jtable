@@ -7,10 +7,8 @@ import java.util.Optional;
 import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
 import com.alibaba.dubbo.rpc.RpcContext;
-import com.alibaba.dubbo.rpc.service.GenericService;
 import com.egaosoft.jtable.core.Table;
 import com.egaosoft.jtable.dubbo.filter.ServiceFilter;
-import com.egaosoft.jtable.exception.BusinessException;
 import com.egaosoft.jtable.transaction.FlowActuator;
 import com.egaosoft.jtable.transaction.FlowKit;
 import com.egaosoft.jtable.transaction.TransactionFlow;
@@ -26,7 +24,7 @@ import com.jfinal.plugin.activerecord.Page;
  * @date 2018年7月2日 下午5:23:14
  */
 @SuppressWarnings("rawtypes")
-public abstract class ServiceImpl<T extends Model> implements Service<T>, GenericService {
+public abstract class ServiceImpl<T extends Model> implements Service<T> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceImpl.class);
 
@@ -588,7 +586,7 @@ public abstract class ServiceImpl<T extends Model> implements Service<T>, Generi
         return arg;
     }
 
-    private void executeNode() {
+    private void executeNode() throws BusinessException {
 
         TransactionFlow flow = getFlow();
         keepParam();

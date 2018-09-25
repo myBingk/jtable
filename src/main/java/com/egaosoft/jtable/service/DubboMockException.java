@@ -1,4 +1,4 @@
-package com.egaosoft.jtable.exception;
+package com.egaosoft.jtable.service;
 
 /**
  * dubbo服务异常捕获

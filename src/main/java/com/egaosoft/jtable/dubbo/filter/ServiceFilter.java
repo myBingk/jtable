@@ -12,6 +12,8 @@ import com.alibaba.dubbo.rpc.RpcException;
 import com.jfinal.plugin.activerecord.Model;
 
 /**
+ * 通用接口拦截器
+ * 
  * @author DoubleCome
  * @date 2018年7月12日 上午10:46:28
  */
@@ -67,7 +69,7 @@ public class ServiceFilter implements Filter {
 
     public static boolean hasSystemIdField(Object obj) {
         for (Method method : obj.getClass().getMethods()) {
-            if (method.getName().equals("setSystemId")) {
+            if ("setSystemId".equals(method.getName())) {
                 return true;
             }
         }

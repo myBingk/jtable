@@ -3,7 +3,6 @@ package com.egaosoft.jtable.service;
 import java.util.List;
 import java.util.Map;
 
-import com.egaosoft.jtable.exception.BusinessException;
 import com.jfinal.plugin.activerecord.Model;
 import com.jfinal.plugin.activerecord.Page;
 

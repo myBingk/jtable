@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import top.yujiaxin.jfinalplugin.dubbo.core.DubboRpc;
-
 import com.alibaba.dubbo.rpc.service.GenericService;
+import com.egaosoft.jtable.service.BusinessException;
+import com.egaosoft.jtable.service.DatabaseException;
 import com.jfinal.kit.Kv;
+
+import top.yujiaxin.jfinalplugin.dubbo.core.DubboRpc;
 
 /**
  * 流程工具类
@@ -20,14 +22,14 @@ import com.jfinal.kit.Kv;
 public class FlowKit {
 
     @SuppressWarnings("unchecked")
-    public static void executeTransactionFlow(TransactionNode node, Object desiredResult) {
+    public static void executeTransactionFlow(TransactionNode node, Object desiredResult) throws BusinessException {
 
-        if (node == null)
+        if (node == null) {
             return;
+        }
 
-        GenericService genericService =
-            DubboRpc.receiveService(GenericService.class,
-                Kv.by("interfaceName", node.getClassName()).set("generic", "true").set(node.getServiceConfig()));
+        GenericService genericService = DubboRpc.receiveService(GenericService.class,
+            Kv.by("interfaceName", node.getClassName()).set("generic", "true").set(node.getServiceConfig()));
 
         /*执行一次数组拷贝操作，防止递归引用*/
         String[] types = node.getParameterTypes().toArray(new String[node.getParameterTypes().size()]);
@@ -36,8 +38,8 @@ public class FlowKit {
 
         Object result = genericService.$invoke(node.getMethodName(), types, args);
 
-        if (result != null && !desiredResult.equals(result)) {
-            throw new RuntimeException("执行结果不是预期的结果，预期结果：" + desiredResult);
+        if (result == null || !desiredResult.equals(result)) {
+            throw new DatabaseException("执行结果与预期不符，预期结果：true,执行结果:" + result);
         }
     }
 

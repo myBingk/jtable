@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.alibaba.dubbo.rpc.RpcException;
-import com.egaosoft.jtable.exception.DubboMockException;
+import com.egaosoft.jtable.service.DubboMockException;
 import com.egaosoft.jtable.service.Service;
 import com.jfinal.plugin.activerecord.Model;
 import com.jfinal.plugin.activerecord.Page;

@@ -3,11 +3,10 @@ package com.egaosoft.jtable.dubbo;
 import java.util.List;
 import java.util.Map;
 
-import com.egaosoft.jtable.exception.BusinessException;
+import com.egaosoft.jtable.service.BusinessException;
 import com.egaosoft.jtable.service.Service;
 import com.jfinal.plugin.activerecord.Model;
 import com.jfinal.plugin.activerecord.Page;
-
 /**
  * dubbo本地伪装，用于调用服务前的拦截操作
  * 

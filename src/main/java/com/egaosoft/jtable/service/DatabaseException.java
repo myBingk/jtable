@@ -1,4 +1,4 @@
-package com.egaosoft.jtable.exception;
+package com.egaosoft.jtable.service;
 
 import java.sql.SQLException;
 
@@ -16,6 +16,10 @@ public class DatabaseException extends BusinessException {
 
     public DatabaseException() {
         super();
+    }
+
+    public DatabaseException(String msg) {
+        super(msg);
     }
 
     public DatabaseException(int errorCode, Exception e) {

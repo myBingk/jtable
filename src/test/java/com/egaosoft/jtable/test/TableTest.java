@@ -1,19 +1,26 @@
 package com.egaosoft.jtable.test;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import com.egaosoft.jtable.config.JudgmentType;
+import com.egaosoft.jtable.config.Equation;
+import com.egaosoft.jtable.config.Sort;
+import com.egaosoft.jtable.core.Condition;
 import com.egaosoft.jtable.core.Table;
 import com.egaosoft.jtable.core.TableManager;
-import com.egaosoft.jtable.exception.BusinessException;
+import com.egaosoft.jtable.service.BusinessException;
+import com.jfinal.plugin.activerecord.Model;
+
+import junit.framework.Assert;
 
 /**
  * table对象测试用例
@@ -98,7 +105,13 @@ public class TableTest extends TestCase {
     }
 
     @Test
-    public void testFindList() throws BusinessException {
+    public void testFindList() throws BusinessException, ParseException {
+        BasicDictionary saveDictionary = getModel(BasicDictionary.class, 6L);
+        saveDictionary.setCreationTime(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2018-4-28 16:20:30"));
+        BasicDictionary condition = new BasicDictionary();
+        condition.setCreationTime(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2018-4-28 16:20:30"));
+        BasicDictionary returns = getTable().find(condition);
+        System.out.println(returns);
         Assert.assertNotNull(getTable().findList());
         Assert.assertEquals(10, getTable().findList().size());
     }
@@ -117,30 +130,43 @@ public class TableTest extends TestCase {
         Assert.assertEquals(1, getTable().findListInPageWithKeywords(1, 10, keywords).getList().size());
         BasicDictionary keywords2 = new BasicDictionary();
         keywords2.setValue("2");
-        keywords2.put(Table.getSortByKey(), "dictionaryId");
-        keywords2.put(Table.getSortOrderKey(), "ASC");
-        Assert.assertTrue(getTable().findListInPageWithKeywords(1, 10, keywords2).getList().get(0).getDictionaryId()
-            .equals(2L));
+        /*keywords2.put(Table.getSortByKey(), "dictionaryId");
+        keywords2.put(Table.getSortOrderKey(), "ASC");*/
+        Assert.assertTrue(
+            getTable().findListInPageWithKeywords(1, 10, keywords2).getList().get(0).getDictionaryId().equals(2L));
     }
 
     @Test
     public void testFindListInPageIntIntStringStringLong() throws BusinessException {
         Assert.assertNotNull(getTable().findListInPage(1, 10, "dictionaryId", "ASC"));
-        Assert.assertTrue(1L == getTable().findListInPage(1, 10, "dictionaryId", "ASC").getList().get(0)
-            .getDictionaryId());
+        Assert.assertTrue(
+            1L == getTable().findListInPage(1, 10, "dictionaryId", "ASC").getList().get(0).getDictionaryId());
     }
 
     @Test
-    public void testFindListInPageWithKeywordsIntIntStringStringLongBasicDictionaryLong() throws BusinessException {
-        BasicDictionary keywords = new BasicDictionary();
-        keywords.setName("1");
-        keywords.setNameJudgmentType(JudgmentType.ALL_LIKE);
-        keywords.setCreationTime(new Date());
-        keywords.setCreationTimeJudgmentType(JudgmentType.LESS_THAN);
-        Assert.assertTrue(1L == getTable().findListInPageWithKeywords(1, 10, keywords, "dictionaryId", "ASC").getList()
+    public void testFindListInPageWithKeywordsIntIntStringStringLongBasicDictionaryLong()
+        throws BusinessException, ParseException {
+
+        BasicDictionary condition = new BasicDictionary();
+
+        List<Condition> conditionList = new ArrayList<Condition>();
+        conditionList.add(Condition.getInstance(BasicDictionary::getNameFieldName).sort(Sort.DESC, 10)
+            .equation(Equation.ALL_LIKE).value("1").build());
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        conditionList.add(Condition.getInstance(BasicDictionary::getCreationTimeFieldName).sort(Sort.DESC, 10)
+            .equation(Equation.EQUAL).value(sdf.parse("2018-04-28 16:20:30")).build());
+
+        Condition.attach(condition, conditionList);
+        Assert.assertTrue(1L == getTable().findListInPageWithKeywords(1, 10, condition, "dictionaryId", "ASC").getList()
             .get(0).getDictionaryId());
-        keywords.setName("3");
-        Assert.assertTrue(3L == getTable().findListInPageWithKeywords(1, 10, keywords, "dictionaryId", "DESC")
+
+        List<Condition> conditionList2 = new ArrayList<Condition>();
+        conditionList2.add(Condition.getInstance(BasicDictionary::getNameFieldName).sort(Sort.DESC, 10)
+            .equation(Equation.EQUAL).value("3").build());
+
+        Condition.attach(condition, conditionList2);
+        Assert.assertTrue(3L == getTable().findListInPageWithKeywords(1, 10, condition, "dictionaryId", "DESC")
             .getList().get(0).getDictionaryId());
     }
 
@@ -377,37 +403,76 @@ public class TableTest extends TestCase {
     }
 
     protected BasicDictionary generate(Long value) {
-        BasicDictionary basicDictionary = new BasicDictionary();
-        basicDictionary.setDictionaryId(value);
-        basicDictionary.setSystemId(1L);
-        basicDictionary.setName(value.toString());
-        basicDictionary.setValue(value.toString());
-        basicDictionary.setCode(value.toString());
-        basicDictionary.setDescription(value.toString());
-        basicDictionary.setParentId(value);
-        basicDictionary.setOrderBy(Integer.parseInt(value.toString()));
-        basicDictionary.setCreationTime(new Date());
-        basicDictionary.setUpdateTime(new Date());
-        return basicDictionary;
+        return getModel(BasicDictionary.class, value);
     }
 
     protected List<BasicDictionary> generateList(Long... values) {
         List<BasicDictionary> list = new ArrayList<BasicDictionary>();
         for (Long value : values) {
-            BasicDictionary basicDictionary = new BasicDictionary();
-            basicDictionary.setDictionaryId(value);
-            basicDictionary.setSystemId(1L);
-            basicDictionary.setName(value.toString());
-            basicDictionary.setValue(value.toString());
-            basicDictionary.setCode(value.toString());
-            basicDictionary.setDescription(value.toString());
-            basicDictionary.setParentId(value);
-            basicDictionary.setOrderBy(Integer.parseInt(value.toString()));
-            basicDictionary.setCreationTime(new Date());
-            basicDictionary.setUpdateTime(new Date());
-            list.add(basicDictionary);
+            list.add(getModel(BasicDictionary.class, value));
         }
         return list;
+    }
+
+    @SuppressWarnings("rawtypes")
+    protected <T extends Model> T getModel(Class<T> classz, Long value) {
+        try {
+            T t = classz.newInstance();
+            Method[] methods = t.getClass().getMethods();
+
+            Date today = new Date();
+            String valueString = String.valueOf(value);
+            Integer valueInteger = Integer.parseInt(valueString);
+
+            for (Method method : methods) {
+                String methodName = method.getName();
+                if (methodName.startsWith("set") && method.getParameterCount() == 1) {
+                    for (Class param : method.getParameterTypes()) {
+                        try {
+                            if ("java.lang.Long".equals(param.getTypeName())) {
+                                method.invoke(t, value);
+                                continue;
+                            }
+
+                            if ("java.lang.String".equals(param.getTypeName())) {
+                                method.invoke(t, valueString);
+                                continue;
+                            }
+
+                            if ("java.util.Date".equals(param.getTypeName())) {
+                                method.invoke(t, today);
+                                continue;
+                            }
+
+                            if ("java.lang.Integer".equals(param.getTypeName())) {
+                                method.invoke(t, valueInteger);
+                                continue;
+                            }
+
+                            if ("java.lang.Boolean".equals(param.getTypeName())) {
+                                method.invoke(t, false);
+                                continue;
+                            }
+
+                            if ("java.math.BigDecimal".equals(param.getTypeName())) {
+                                method.invoke(t, BigDecimal.ZERO);
+                                continue;
+                            }
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                        } catch (IllegalArgumentException e) {
+                            e.printStackTrace();
+                        } catch (InvocationTargetException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+            return t;
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

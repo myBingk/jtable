@@ -5,12 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,15 +16,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
 import com.alibaba.dubbo.rpc.RpcContext;
-import com.egaosoft.jtable.config.JudgmentType;
+import com.egaosoft.jtable.config.Equation;
+import com.egaosoft.jtable.config.Operator;
 import com.egaosoft.jtable.config.SQLOperation;
-import com.egaosoft.jtable.exception.BusinessException;
-import com.egaosoft.jtable.exception.DatabaseException;
-import com.egaosoft.jtable.exception.IllegalAgumentException;
+import com.egaosoft.jtable.service.BusinessException;
+import com.egaosoft.jtable.service.DatabaseException;
+import com.egaosoft.jtable.service.IllegalAgumentException;
 import com.egaosoft.jtable.service.Service;
 import com.jfinal.kit.StrKit;
 import com.jfinal.plugin.activerecord.ActiveRecordException;
@@ -51,13 +49,14 @@ public class Table<T extends Model> implements Service<T> {
     private String queryTableName = "";
     private T tableModel;
 
+    private Map<String, String> keyMap = new HashMap<String, String>();
+
     // 特殊业务需求，多系统下区别systemId。
     private static final String SYSTEM_ID = "systemId";
     private boolean hasSystemId = false;
 
     // 每次同时操作数据的最大值
     private static int eachAlterQuantity = 100;
-    private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
 
     @SuppressWarnings("unused")
     private Table() {}
@@ -68,6 +67,7 @@ public class Table<T extends Model> implements Service<T> {
         if (columns == null || columns.size() == 0) {
             throw new RuntimeException("Columns initialization failed. Possible reason: The table does not exist.");
         }
+
         Set<String> primaryKeySet = new HashSet<String>();
         if (this.keySet.size() == 0) {
             for (Record column : columns) {
@@ -78,6 +78,7 @@ public class Table<T extends Model> implements Service<T> {
                     continue;
                 }
                 this.queryBody.append("`").append(columnName).append("`").append(", ");
+                this.keyMap.put(columnName, "`" + columnName + "` = ?");
             }
         }
 
@@ -89,7 +90,7 @@ public class Table<T extends Model> implements Service<T> {
         }
         this.queryPrimaryKey = getPrimaryValue(this.primaryKey, 0, ",");
         this.queryTableName = "`" + tableName + "`";
-        if (this.queryBody.toString().contains(SYSTEM_ID)) {
+        if (isFieldExist(SYSTEM_ID)) {
             this.hasSystemId = true;
         }
 
@@ -127,11 +128,15 @@ public class Table<T extends Model> implements Service<T> {
     @Override
     public boolean saveForAny(Object... args) throws BusinessException {
         try {
-            String values = getValue(args, 0, ",");
-            StringBuilder sql =
-                buildSql(SQLOperation.INSERT, SQLOperation.INTO, this.queryTableName, SQLOperation.VALUES, "(", values,
-                    ")");
-            return Db.update(sql.toString()) == 1;
+            SqlPara sql = new SqlPara();
+            String values = getWhereIn(args.length);
+            for (Object arg : args) {
+                sql.addPara(arg);
+            }
+            StringBuilder sqlBuilder =
+                buildSql(SQLOperation.INSERT, SQLOperation.INTO, this.queryTableName, SQLOperation.VALUES, values);
+            sql.setSql(sqlBuilder.toString());
+            return Db.update(sql) == 1;
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据插入失败", e);
@@ -372,10 +377,11 @@ public class Table<T extends Model> implements Service<T> {
     }
 
     @Override
-    public boolean deleteForAny(T conditions) throws BusinessException {
-        StringBuilder sql = buildSql(getDeleteBody(), getWhereQuery(conditions, SQLOperation.AND));
+    public boolean deleteForAny(T condition) throws BusinessException {
+        SqlPara sql = accumulate(getDeleteBody(), getWhereQuery(condition, null, null));
+        condition.remove(Condition.CONDITION_BUILDER);
         try {
-            return Db.update(sql.toString()) > 0;
+            return Db.update(sql) > 0;
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据删除失败", e);
@@ -464,9 +470,9 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public boolean delete(Object... primaryKey) throws BusinessException {
-        StringBuilder sql = buildSql(getDeleteBody(), getPrimaryWhereQuery(primaryKey));
+        SqlPara sql = accumulate(getDeleteBody(), getPrimaryWhereQuery(primaryKey));
         try {
-            return Db.update(sql.toString()) == 1;
+            return Db.update(sql) == 1;
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据删除失败", e);
@@ -477,19 +483,13 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public boolean deleteAsGroup(List<T> modelList) throws BusinessException {
-        StringBuilder whereSql = new StringBuilder();
+        List<SqlPara> sqlParaList = new ArrayList<SqlPara>();
         for (String primaryKey : this.primaryKey) {
-            if (whereSql.toString().equals("")) {
-                whereSql
-                    .append(getWhereQuery(modelList.stream().map(e -> e.get(primaryKey)).toArray(), SQLOperation.OR));
-            } else {
-                whereSql.append(SQLOperation.AND).append(
-                    getWhereQuery(modelList.stream().map(e -> e.get(primaryKey)).toArray(), SQLOperation.OR));
-            }
+            sqlParaList.add(getPrimaryWhereQuery(primaryKey, modelList.stream().map(e -> e.get(primaryKey)).toArray()));
         }
-        StringBuilder sql = buildSql(getDeleteBody(), whereSql);
+        SqlPara sql = accumulate(getDeleteBody(), sqlParaList);
         try {
-            return Db.update(sql.toString()) > 0;
+            return Db.update(sql) > 0;
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据删除失败", e);
@@ -499,19 +499,13 @@ public class Table<T extends Model> implements Service<T> {
     }
 
     private boolean deleteAsGroupExtra(List<? extends Model> modelList) throws BusinessException {
-        StringBuilder whereSql = new StringBuilder();
+        List<SqlPara> sqlParaList = new ArrayList<SqlPara>();
         for (String primaryKey : this.primaryKey) {
-            if (whereSql.toString().equals("")) {
-                whereSql
-                    .append(getWhereQuery(modelList.stream().map(e -> e.get(primaryKey)).toArray(), SQLOperation.OR));
-            } else {
-                whereSql.append(SQLOperation.AND).append(
-                    getWhereQuery(modelList.stream().map(e -> e.get(primaryKey)).toArray(), SQLOperation.OR));
-            }
+            sqlParaList.add(getPrimaryWhereQuery(primaryKey, modelList.stream().map(e -> e.get(primaryKey)).toArray()));
         }
-        StringBuilder sql = buildSql(getDeleteBody(), whereSql);
+        SqlPara sql = accumulate(getDeleteBody(), sqlParaList);
         try {
-            return Db.update(sql.toString()) > 0;
+            return Db.update(sql) > 0;
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据删除失败", e);
@@ -607,20 +601,13 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public boolean deleteAsGroup(Object[]... primaryKeySet) throws BusinessException {
-        StringBuilder whereSql = new StringBuilder();
+        List<SqlPara> paraList = new ArrayList<SqlPara>();
         for (Object[] keySet : primaryKeySet) {
-            if (keySet.length == 0) {
-                return false;
-            }
-            if (whereSql.toString().equals("")) {
-                whereSql.append(getWhereQuery(keySet, ","));
-            } else {
-                whereSql.append(" ").append(SQLOperation.OR).append(getWhereQuery(keySet, ","));
-            }
+            paraList.add(getPrimaryWhereQuery(keySet));
         }
-        StringBuilder sql = buildSql(getDeleteBody(), whereSql);
+        SqlPara sql = accumulate(getDeleteBody(), paraList);
         try {
-            return Db.update(sql.toString()) > 0;
+            return Db.update(sql) > 0;
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据删除失败", e);
@@ -632,9 +619,8 @@ public class Table<T extends Model> implements Service<T> {
     @Override
     @Deprecated
     public boolean deleteAll() throws BusinessException {
-        StringBuilder sql = buildSql(getDeleteBody());
         try {
-            return Db.update(sql.toString()) > 0;
+            return Db.update(getDeleteBody()) > 0;
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("表格删除失败", e);
@@ -657,9 +643,10 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public boolean update(T model, T conditation) throws BusinessException {
-        StringBuilder sql = buildSql(getUpdateBody(model), getWhereQuery(conditation, SQLOperation.AND));
+        SqlPara sql = accumulate(getUpdateBody(model), getWhereQuery(conditation, null, null));
         try {
-            return Db.update(sql.toString()) == 1;
+            System.out.println(sql.toString());
+            return Db.update(sql) == 1;
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据更新失败", e);
@@ -748,13 +735,21 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public boolean updateAsGroup(List<T> modelList, T conditation) throws BusinessException {
-        StringBuilder sqls = new StringBuilder();
+        SqlPara sql = new SqlPara();
+        StringBuilder modelSql = new StringBuilder();
         for (T model : modelList) {
-            StringBuilder sql = buildSql(getUpdateBody(model), getWhereQuery(conditation, SQLOperation.AND));
-            sqls.append(sql).append(";");
+            SqlPara updateSql = getUpdateBody(model);
+            SqlPara whereSql = getWhereQuery(conditation, null, null);
+            modelSql.append(updateSql.getSql());
+            modelSql.append(" ").append(SQLOperation.WHERE).append(" 1");
+            modelSql.append(whereSql.getSql());
+            modelSql.append(";");
+            addPara(sql, updateSql);
+            addPara(sql, updateSql);
         }
+        sql.setSql(modelSql.toString());
         try {
-            return Db.update(sqls.toString()) == modelList.size();
+            return Db.update(sql) == modelList.size();
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据更新失败", e);
@@ -833,9 +828,9 @@ public class Table<T extends Model> implements Service<T> {
         if (primaryKey.length != this.primaryKey.length) {
             throw new IllegalAgumentException(10106, new IllegalArgumentException());
         }
-        StringBuilder sql = buildSql(getSelectBody(), getPrimaryWhereQuery(primaryKey));
+        SqlPara sql = accumulate(getSelectBody(), getPrimaryWhereQuery(primaryKey));
         try {
-            return (T)tableModel.dao().findFirst(sql.toString());
+            return (T)tableModel.dao().findFirst(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败，可能原因：主键为空或主键长度与表格主键长度不一致。", e);
@@ -845,13 +840,9 @@ public class Table<T extends Model> implements Service<T> {
     }
 
     public List<T> findForAny(Object... args) throws BusinessException {
-        StringBuilder sql = buildSql(getSelectBody(), getWhereQuery(args, SQLOperation.OR));
-        Optional<String> systemId = Optional.ofNullable(RpcContext.getContext().getAttachment(SYSTEM_ID));
-        if (systemId.isPresent() && hasSystemId) {
-            sql.append(buildSql(SQLOperation.AND, "`" + SYSTEM_ID + "`", "=", changeQueryValue(systemId.get())));
-        }
+        SqlPara sql = accumulate(getSelectBody(), getWhere(args));
         try {
-            return (List<T>)tableModel.find(sql.toString());
+            return (List<T>)tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败，可能原因：列数或数据格式不正确。", e);
@@ -862,9 +853,10 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public T find(T condition) throws BusinessException {
-        StringBuilder sql = buildSql(getSelectBody(), getWhereQuery(condition, SQLOperation.AND));
+        SqlPara sql = accumulate(getSelectBody(), getWhereQuery(condition, null, null));
+        condition.remove(Condition.CONDITION_BUILDER);
         try {
-            return (T)tableModel.findFirst(sql.toString());
+            return (T)tableModel.findFirst(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败，可能原因：列不存在。", e);
@@ -881,13 +873,10 @@ public class Table<T extends Model> implements Service<T> {
         if (this.primaryKey.length != 1) {
             throw new IllegalAgumentException(10106, new IllegalArgumentException());
         }
-        StringBuilder sql = buildSql(getSelectBody(), getWhereQuery(idSet, SQLOperation.AND));
-        Optional<String> systemId = Optional.ofNullable(RpcContext.getContext().getAttachment(SYSTEM_ID));
-        if (systemId.isPresent() && hasSystemId) {
-            sql.append(buildSql(SQLOperation.AND, "`" + SYSTEM_ID + "`", "=", changeQueryValue(systemId.get())));
-        }
+
+        SqlPara sql = accumulate(getSelectBody(), getPrimaryWhereQuery(idSet));
         try {
-            return (List<T>)tableModel.find(sql.toString());
+            return (List<T>)tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -901,24 +890,14 @@ public class Table<T extends Model> implements Service<T> {
         if (this.primaryKey.length != idSets.length) {
             throw new IllegalAgumentException(10106, new IllegalArgumentException());
         }
-        StringBuilder whereSql = new StringBuilder();
+
+        List<SqlPara> sqlParaList = new ArrayList<SqlPara>();
         for (Long[] idSet : idSets) {
-            if (idSet.length == 0) {
-                return new ArrayList<T>();
-            }
-            if (whereSql.toString().equals("")) {
-                whereSql.append(getWhereQuery(idSet, ","));
-            } else {
-                whereSql.append(" ").append(SQLOperation.AND).append(getWhereQuery(idSet, ","));
-            }
+            sqlParaList.add(getPrimaryWhereQuery(idSet));
         }
-        StringBuilder sql = buildSql(getSelectBody(), whereSql);
-        Optional<String> systemId = Optional.ofNullable(RpcContext.getContext().getAttachment(SYSTEM_ID));
-        if (systemId.isPresent() && hasSystemId) {
-            sql.append(buildSql(SQLOperation.AND, "`" + SYSTEM_ID + "`", "=", changeQueryValue(systemId.get())));
-        }
+        SqlPara sql = accumulate(getSelectBody(), sqlParaList);
         try {
-            return (List<T>)tableModel.find(sql.toString());
+            return (List<T>)tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -929,13 +908,9 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public List<T> findList() throws BusinessException {
-        StringBuilder sql = buildSql(getSelectBody());
+        SqlPara sql = accumulate(getSelectBody());
         try {
-            Optional<String> systemId = Optional.ofNullable(RpcContext.getContext().getAttachment(SYSTEM_ID));
-            if (systemId.isPresent() && hasSystemId) {
-                sql.append(buildSql(SQLOperation.WHERE, "`" + SYSTEM_ID + "`", "=", changeQueryValue(systemId.get())));
-            }
-            return (List<T>)tableModel.find(sql.toString());
+            return (List<T>)tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -946,9 +921,10 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public List<T> findList(T condition) throws BusinessException {
-        StringBuilder sql = buildSql(getSelectBody(), getWhereQuery(condition, SQLOperation.AND));
+        SqlPara sql = accumulate(getSelectBody(), getWhereQuery(condition, null, null));
+        condition.remove(Condition.CONDITION_BUILDER);
         try {
-            return (List<T>)tableModel.find(sql.toString());
+            return (List<T>)tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -959,15 +935,9 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public Page<T> findListInPage(int pageNumber, int pageSize) throws BusinessException {
+        SqlPara sql = accumulate(getSelectBody());
         try {
-            StringBuilder sql = buildSql(getSelectBody());
-            Optional<String> systemId = Optional.ofNullable(RpcContext.getContext().getAttachment(SYSTEM_ID));
-            if (systemId.isPresent() && hasSystemId) {
-                sql.append(buildSql(SQLOperation.AND, "`" + SYSTEM_ID + "`", "=", changeQueryValue(systemId.get())));
-            }
-            SqlPara sqlPara = new SqlPara();
-            sqlPara.setSql(sql.toString());
-            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sqlPara);
+            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -978,11 +948,10 @@ public class Table<T extends Model> implements Service<T> {
 
     @Override
     public Page<T> findListInPageWithKeywords(int pageNumber, int pageSize, T condition) throws BusinessException {
-        StringBuilder sql = buildSql(getSelectBody(), getWhereQuery(condition, SQLOperation.AND));
-        SqlPara sqlPara = new SqlPara();
-        sqlPara.setSql(sql.toString());
+        SqlPara sql = accumulate(getSelectBody(), getWhereQuery(condition, null, null));
+        condition.remove(Condition.CONDITION_BUILDER);
         try {
-            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sqlPara);
+            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -994,18 +963,11 @@ public class Table<T extends Model> implements Service<T> {
     @Override
     public Page<T> findListInPage(int pageNumber, int pageSize, String sortBy, String sortOrder)
         throws BusinessException {
+        SqlPara sql = accumulate(getSelectBody());
+        sql.setSql(sql.getSql() + getSortBy(sortBy) + getSortOrder(sortOrder));
         try {
-            StringBuilder sql = buildSql(getSelectBody(), getSortBy(sortBy), getSortOrder(sortOrder));
-            Optional<String> systemId = Optional.ofNullable(RpcContext.getContext().getAttachment(SYSTEM_ID));
-            if (systemId.isPresent() && hasSystemId) {
-                sql =
-                    buildSql(getSelectBody(),
-                        buildSql(SQLOperation.WHERE, "`" + SYSTEM_ID + "`", "=", changeQueryValue(systemId.get())),
-                        getSortBy(sortBy), getSortOrder(sortOrder));
-            }
-            SqlPara sqlPara = new SqlPara();
-            sqlPara.setSql(sql.toString());
-            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sqlPara);
+
+            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -1015,16 +977,13 @@ public class Table<T extends Model> implements Service<T> {
     }
 
     @Override
-    public Page<T>
-        findListInPageWithKeywords(int pageNumber, int pageSize, T condition, String sortBy, String sortOrder)
-            throws BusinessException {
-        StringBuilder sql =
-            buildSql(getSelectBody(), getWhereQuery(condition, SQLOperation.AND), getSortBy(sortBy),
-                getSortOrder(sortOrder));
-        SqlPara sqlPara = new SqlPara();
-        sqlPara.setSql(sql.toString());
+    public Page<T> findListInPageWithKeywords(int pageNumber, int pageSize, T condition, String sortBy,
+        String sortOrder) throws BusinessException {
+
+        SqlPara sql = accumulate(getSelectBody(), getWhereQuery(condition, sortBy, sortOrder));
+        condition.remove(Condition.CONDITION_BUILDER);
         try {
-            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sqlPara);
+            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -1045,7 +1004,7 @@ public class Table<T extends Model> implements Service<T> {
      */
     public List<T> find(String body, String where) throws BusinessException {
         if (body.equals("")) {
-            body = getSelectBody();
+            body = getSelectBody().getSql();
         }
         StringBuilder sql = buildSql(body, where);
         try {
@@ -1136,26 +1095,34 @@ public class Table<T extends Model> implements Service<T> {
         }
     }
 
-    public String getDeleteBody() {
-        return buildSql(SQLOperation.DELETE, SQLOperation.FROM, this.queryTableName).toString();
+    public SqlPara getDeleteBody() {
+        SqlPara sql = new SqlPara();
+        sql.setSql(buildSql(SQLOperation.DELETE, SQLOperation.FROM, this.queryTableName).toString());
+        return sql;
     }
 
-    public String getUpdateBody(T model) {
-        StringBuilder sql = buildSql(SQLOperation.UPDATE, this.queryTableName, SQLOperation.SET);
-        Map<String, Object> map = bean2Map(model);
-        for (String key : map.keySet()) {
-            sql.append(buildSql(key, "=", changeQueryValue(model.get(key)), ","));
+    public SqlPara getUpdateBody(T model) {
+        SqlPara sql = new SqlPara();
+        StringBuilder sqlBuilder = buildSql(SQLOperation.UPDATE, this.queryTableName, SQLOperation.SET);
+        Set<Entry<String, Object>> entrySet = model._getAttrsEntrySet();
+        for (Entry<String, Object> entry : entrySet) {
+            sql.addPara(entry.getValue());
+            sqlBuilder.append(" ").append(this.keyMap.get(entry.getKey())).append(",");
         }
-        return sql.toString().substring(0, sql.toString().lastIndexOf(","));
+        sql.setSql(sqlBuilder.toString().substring(0, sqlBuilder.toString().lastIndexOf(",")));
+        return sql;
     }
 
-    public String getSelectBody() {
-        return buildSql(SQLOperation.SELECT, this.queryBody, getPrimaryKeyQuery(), SQLOperation.FROM,
-            this.queryTableName).toString();
+    public SqlPara getSelectBody() {
+        SqlPara sql = new SqlPara();
+        sql.setSql(
+            buildSql(SQLOperation.SELECT, this.queryBody, getPrimaryKeyQuery(), SQLOperation.FROM, this.queryTableName)
+                .toString());
+        return sql;
     }
 
     public String getSortBy(String sortOrder) throws BusinessException {
-        if (!this.keySet.contains(sortOrder)) {
+        if (!isFieldExist(sortOrder)) {
             throw new IllegalAgumentException(10102, new IllegalArgumentException());
         }
         return buildSql(SQLOperation.ORDER, SQLOperation.BY, "`" + sortOrder + "`").toString();
@@ -1171,247 +1138,206 @@ public class Table<T extends Model> implements Service<T> {
         throw new IllegalAgumentException(10098, new IllegalArgumentException());
     }
 
-    public static String getSortByKey() {
-        return SORT_BY;
+    public SqlPara getPrimaryWhereQuery(String key, Object[] primaryKeys) {
+        SqlPara sql = new SqlPara();
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append(" ").append(SQLOperation.AND).append(" ").append("`" + key + "`").append(" ")
+            .append(SQLOperation.IN).append(" ").append(getWhereIn(primaryKeys.length));
+        for (Object primaryKey : primaryKeys) {
+            sql.addPara(primaryKey);
+        }
+        sql.setSql(sqlBuilder.toString());
+        return sql;
     }
 
-    public static String getSortOrderKey() {
-        return SORT_ORDER;
-    }
-
-    public String getPrimaryWhereQuery(Object[] primaryKey) {
-        StringBuilder primaryKeyQuery = new StringBuilder();
-        int primaryKeyLength = primaryKey.length;
-        for (int i = 0; i < primaryKeyLength; i++) {
-            if (i != 0) {
-                primaryKeyQuery.append("AND").append("`" + this.primaryKey[i] + "`").append(" = ")
-                    .append(changeQueryValue(primaryKey[0]));
-            } else {
-                primaryKeyQuery.append("`" + this.primaryKey[i] + "`").append(" = ")
-                    .append(changeQueryValue(primaryKey[0]));
+    public SqlPara getPrimaryWhereQuery(Object[] primaryKeys) {
+        SqlPara sql = new SqlPara();
+        StringBuilder sqlBuilder = new StringBuilder();
+        for (String keyPrimary : this.primaryKey) {
+            sqlBuilder.append(" ").append(SQLOperation.AND).append(" ").append("`" + keyPrimary + "`").append(" ")
+                .append(SQLOperation.IN).append(" ").append(getWhereIn(primaryKeys.length));
+            for (Object primaryKey : primaryKeys) {
+                sql.addPara(primaryKey);
             }
         }
-        return primaryKeyQuery.length() == 0 ? "" : buildSql(SQLOperation.WHERE, primaryKeyQuery).toString();
+        sql.setSql(sqlBuilder.toString());
+        return sql;
+    }
+
+    public SqlPara getPrimaryWhereQuery(Object primaryKey) {
+        SqlPara sql = new SqlPara();
+        StringBuilder sqlBuilder = new StringBuilder();
+        for (String keyPrimary : this.primaryKey) {
+            sql.addPara(primaryKey);
+            sqlBuilder.append(" ").append(SQLOperation.AND).append(" ").append(this.keyMap.get(keyPrimary));
+        }
+        sql.setSql(sqlBuilder.toString());
+        return sql;
     }
 
     public String getPrimaryKeyQuery() {
         return this.queryPrimaryKey;
     }
 
-    public Object changeQueryValue(Object object) {
-        if (object == null) {
-            return null;
-        }
-        if (object instanceof String) {
-            return "'" + object + "'";
-        }
-        if (object instanceof Date) {
-
-            Instant instant = ((Date)object).toInstant();
-            ZoneId zoneId = ZoneId.systemDefault();
-            LocalDateTime localDateTime = instant.atZone(zoneId).toLocalDateTime();
-
-            return "'" + localDateTime.format(DTF) + "'";
-        }
-        if (object.getClass().isArray()) {
-            for (Object obj : (Object[])object) {
-                changeQueryValue(obj);
-            }
-        }
-        return object;
-    }
-
-    public String getWhereQuery(Object value, String SplicingConditions) {
+    public SqlPara getWhere(Object value) {
+        SqlPara sql = new SqlPara();
         StringBuilder whereQuery = new StringBuilder();
-        value = changeQueryValue(value);
         for (String key : this.keySet) {
-            if (whereQuery.toString().equals("")) {
-                whereQuery.append(buildSql("`" + key + "`", "=", value));
-            } else {
-                whereQuery.append(buildSql(SplicingConditions, "`" + key + "`", "=", value));
-            }
-        }
-        return whereQuery.length() == 0 ? "" : buildSql(SQLOperation.WHERE, whereQuery).toString();
-    }
-
-    public String getWhereQuery(Object[] values, Object SplicingConditions) {
-        return getWhere(values, SplicingConditions, true);
-    }
-
-    public String getWhereQuery(Object[] values, String SplicingConditions) {
-        return getWhere(values, SplicingConditions, true);
-    }
-
-    public String getWhere(Object[] values, Object SplicingConditions, boolean isAppendWhere) {
-        StringBuilder sqlQuery = new StringBuilder();
-        sqlQuery.append("(");
-        sqlQuery.append(getValue(values, 0, ","));
-        sqlQuery.append(")");
-        StringBuilder whereQuery = new StringBuilder();
-        for (String key : this.primaryKey) {
-            if (whereQuery.toString().equals("")) {
-                whereQuery.append(buildSql("`" + key + "`", SQLOperation.IN, sqlQuery));
-            } else {
-                whereQuery.append(buildSql(SplicingConditions, "`" + key + "`", SQLOperation.IN, sqlQuery));
-            }
-        }
-        return whereQuery.length() == 0 ? "" : buildSql(isAppendWhere ? SQLOperation.WHERE : "", whereQuery).toString();
-    }
-
-    public String getWhereQuery(String columnName, Object value, boolean isAppendWhere) throws BusinessException {
-        if (!queryBody.toString().contains(columnName)) {
-            throw new IllegalAgumentException(10094, new IllegalArgumentException());
-        }
-        StringBuilder whereQuery = new StringBuilder();
-        whereQuery.append(buildSql("`" + columnName + "`", "=", changeQueryValue(value)));
-        return whereQuery.length() == 0 ? "" : buildSql(isAppendWhere ? SQLOperation.WHERE : "", whereQuery).toString();
-    }
-
-    public String getWhereQuery(String columnName, Object[] values, boolean isAppendWhere) throws BusinessException {
-        if (!queryBody.toString().contains(columnName)) {
-            throw new IllegalAgumentException(10094, new IllegalArgumentException());
-        }
-        StringBuilder sqlQuery = new StringBuilder();
-        sqlQuery.append("(");
-        sqlQuery.append(getValue(values, 0, ","));
-        sqlQuery.append(")");
-        StringBuilder whereQuery = new StringBuilder();
-        whereQuery.append(buildSql("`" + columnName + "`", SQLOperation.IN, sqlQuery));
-        return whereQuery.length() == 0 ? "" : buildSql(isAppendWhere ? SQLOperation.WHERE : "", whereQuery).toString();
-    }
-
-    public String getWhereQuery(T condition, Object SplicingConditions) throws BusinessException {
-        T myCondition = (T)setConditionAndJudgmentType(condition, SplicingConditions);
-        return getSqlQuery(myCondition);
-    }
-
-    private String getSqlQuery(T condition) {
-        Map<String, Object> beanMap = bean2Map(condition);
-        StringBuilder sqlQuery = new StringBuilder();
-        StringBuilder sortQuery = new StringBuilder();
-        for (Entry<String, Object> entry : beanMap.entrySet()) {
-            String value = entry.getValue().toString();
-            int index = value.indexOf(entry.getKey());
-            if (index != -1) {
-                if (sqlQuery.length() == 0) {
-                    sqlQuery.append(value.substring(index - 1));
-                } else {
-                    sqlQuery.append(entry.getValue());
+            whereQuery.append(" ").append(SQLOperation.AND).append(" ").append(this.keyMap.get(key));
+            if (value.getClass().isArray()) {
+                for (Object para : (Object[])value) {
+                    sql.addPara(para);
                 }
+                continue;
             }
-            if (entry.getKey().equals(getSortByKey())) {
-                sortQuery.append(entry.getValue());
-            }
+            sql.addPara(value);
         }
-        String returnString = sortQuery.length() == 0 ? "" : sortQuery.toString();
-        return sqlQuery.length() == 0 ? returnString : buildSql(SQLOperation.WHERE, sqlQuery, sortQuery).toString();
+        sql.setSql(whereQuery.toString());
+        return sql;
     }
 
-    // 数组条件键开头字符
-    private static final String ARRAY_KEY = "Array";
+    public SqlPara getWhere(Object[] values) {
+        SqlPara sql = new SqlPara();
+        StringBuilder sqlQuery = new StringBuilder();
+        sqlQuery.append(getWhereIn(values.length));
+        StringBuilder whereQuery = new StringBuilder();
 
-    // 排序条件的键
-    private static final String SORT_BY = "sortBy";
+        for (String key : this.primaryKey) {
+            whereQuery.append(buildSql("AND `" + key + "`", SQLOperation.IN, sqlQuery));
+            for (Object value : values) {
+                sql.addPara(value);
+            }
+        }
+        sql.setSql(whereQuery.toString());
+        return sql;
+    }
 
-    // 升序降序的键
-    private static final String SORT_ORDER = "sortOrder";
+    public SqlPara getWhereQuery(String columnName, Object value, boolean isAppendWhere) throws BusinessException {
+        if (!isFieldExist(columnName)) {
+            throw new IllegalAgumentException(10094, new IllegalArgumentException());
+        }
+        SqlPara sql = new SqlPara();
+        sql.addPara(value);
+        sql.setSql(this.keyMap.get(columnName));
+        return sql;
+    }
 
-    public T setConditionAndJudgmentType(Model<T> condition, Object SplicingConditions) throws BusinessException {
+    public SqlPara getWhereQuery(String columnName, Object[] values, boolean isAppendWhere) throws BusinessException {
+        if (!isFieldExist(columnName)) {
+            throw new IllegalAgumentException(10094, new IllegalArgumentException());
+        }
+        SqlPara sql = new SqlPara();
+        for (Object value : values) {
+            sql.addPara(value);
+        }
+        sql.setSql(buildSql("`" + columnName + "`", SQLOperation.IN, getWhereIn(values.length)).toString());
+        return sql;
+    }
 
-        SplicingConditions = SplicingConditions == null ? SQLOperation.AND : SplicingConditions;
+    private SqlPara getWhereQuery(T condition, String sortBy, String sortOrder) {
+        SqlPara sql = new SqlPara();
+        StringBuilder sqlBuilder = new StringBuilder();
+        StringBuilder sortBuilder = new StringBuilder();
 
-        String judgmentType = com.egaosoft.jtable.config.JudgmentType.getJudgmentType();
-
-        T myCondition = this.getCondition();
-        Map<String, Object> beanMap = bean2Map(condition);
-
-        for (Entry<String, Object> entry : beanMap.entrySet()) {
-
-            if (entry.getKey().startsWith(judgmentType)) {
-                String otherKey = entry.getKey().replace(judgmentType, "");
-                Object otherValue = condition.get(otherKey);
-                if (otherValue == null) {
+        Set<Entry<String, Object>> entrySet = condition._getAttrsEntrySet();
+        for (Entry<String, Object> entry : entrySet) {
+            if (this.keySet.contains(entry.getKey())) {
+                if (entry.getValue().getClass().isArray()) {
+                    sqlBuilder.append(buildSql(SQLOperation.AND, "`" + entry.getKey() + "`", SQLOperation.IN,
+                        getWhereIn(((Object[])entry.getValue()).length)));
+                    for (Object subValues : (Object[])entry.getValue()) {
+                        sql.addPara(subValues);
+                    }
                     continue;
                 }
-
-                otherValue = changeQueryValue(otherValue);
-                JudgmentType type = condition.get(entry.getKey());
-                switch (type) {
-                    case LEFT_LIKE:
-                        myCondition.put(
-                            otherKey,
-                            buildSql(SplicingConditions, otherKey, SQLOperation.LIKE, SQLOperation.CONCAT, "('%', ",
-                                otherValue, ")"));
-                        break;
-                    case RIGHT_LIKE:
-                        myCondition.put(
-                            otherKey,
-                            buildSql(SplicingConditions, otherKey, SQLOperation.LIKE, SQLOperation.CONCAT, "(",
-                                otherValue, ", '%')"));
-                        break;
-                    case ALL_LIKE:
-                        myCondition.put(
-                            otherKey,
-                            buildSql(SplicingConditions, otherKey, SQLOperation.LIKE, SQLOperation.CONCAT, "('%', ",
-                                otherValue, ", '%')"));
-                        break;
-                    case EQUAL:
-                        myCondition.put(otherKey, buildSql(SplicingConditions, otherKey, "=", otherValue));
-                        break;
-                    case LESS_THAN:
-                        myCondition.put(otherKey, buildSql(SplicingConditions, otherKey, "<=", otherValue));
-                        break;
-                    case MORE_THAN:
-                        myCondition.put(otherKey, buildSql(SplicingConditions, otherKey, ">=", otherValue));
-                        break;
-                    case LENGTH:
-                        myCondition.put(otherKey,
-                            buildSql(SplicingConditions, SQLOperation.LENGTH, "(", otherKey, ")", "=", otherValue));
-                        break;
-                    default:
-                        break;
-                }
-                myCondition.put(entry.getKey(), "true");
-                continue;
+                sqlBuilder.append(" ").append(SQLOperation.AND).append(" ").append("`" + entry.getKey() + "`")
+                    .append(" = ?");
+                sql.addPara(entry.getValue());
             }
-
-            if (entry.getValue() == null) {
-                continue;
-            }
-
-            if (entry.getKey().equals(getSortOrderKey())) {
-                continue;
-            }
-
-            if (entry.getKey().equals(getSortByKey())) {
-                String sortOrder = "ASC";
-                if (condition.get(getSortOrderKey()) != null) {
-                    sortOrder = condition.get(getSortOrderKey());
-                }
-
-                myCondition.put(entry.getKey(), buildSql(getSortBy(entry.getValue().toString()), sortOrder));
-                continue;
-            }
-
-            Object value = this.changeQueryValue(entry.getValue());
-            if (entry.getValue().getClass().isArray() && entry.getKey().endsWith(ARRAY_KEY)) {
-                String realKey = entry.getKey().replace(ARRAY_KEY, "");
-                myCondition.put(realKey, buildSql(SplicingConditions, getWhereQuery(realKey, (Object[])value, false)));
-                continue;
-            }
-
-            if ("true".equals(myCondition.get(judgmentType + entry.getKey()))) {
-                continue;
-            } else {
-                if (this.keySet.contains(entry.getKey())) {
-                    myCondition.put(entry.getKey(),
-                        buildSql(SplicingConditions, "`" + entry.getKey() + "`", "=", value));
-                }
-            }
-
         }
 
-        return myCondition;
+        if (!isAttachCondition(condition)) {
+            if (sortBy != null && sortOrder != null) {
+                sql.setSql(sqlBuilder.toString() + getSortBy(sortBy) + " " + getSortOrder(sortOrder));
+            } else {
+                sql.setSql(sqlBuilder.toString());
+            }
+            return sql;
+        }
+
+        List<Condition> attachList = getCondition(condition);
+        if (attachList.size() > 0) {
+            attachList.get(0).getBuilder().term(Operator.AND);
+        }
+
+        attachList.stream().forEach(attach -> {
+
+            String key = (String)attach.getBuilder().getMapper().apply(condition);
+            Object value = attach.getBuilder().getValue() == null ? condition.get(key) : attach.getBuilder().getValue();
+
+            if (value.getClass().isArray()) {
+                sqlBuilder.append(buildSql(attach.getBuilder().getTerm(), "`" + key + "`", SQLOperation.IN,
+                    getWhereIn(((Object[])value).length)));
+                for (Object subValues : (Object[])value) {
+                    sql.addPara(subValues);
+                }
+                return;
+            }
+
+            sqlBuilder.append(" ").append(attach.getBuilder().getTerm()).append(" ").append("`" + key + "`").append(" ")
+                .append(caseType(attach.getBuilder().getEquation()));
+            sql.addPara(value);
+
+        });
+
+        attachList.sort(new Comparator<Condition>() {
+            @Override
+            public int compare(Condition o1, Condition o2) {
+                return o1.getBuilder().getSortLevel() - o2.getBuilder().getSortLevel();
+            }
+        });
+
+        attachList.stream().filter(e -> e.getBuilder().getSortLevel() != 0).forEach(attach -> {
+            sortBuilder.append("`" + attach.getBuilder().getMapper().apply(condition) + "`").append(" ")
+                .append(attach.getBuilder().getSort()).append(", ");
+        });
+
+        if (!"".equals(sortBuilder.toString())) {
+            sqlBuilder.append(buildSql(SQLOperation.ORDER, SQLOperation.BY,
+                sortBuilder.toString().substring(0, sortBuilder.toString().lastIndexOf(","))));
+            if (sortBy != null && sortOrder != null) {
+                sqlBuilder.append(" ,").append("`" + sortBy + "`").append(" ").append(sortOrder);
+            }
+        } else {
+            if (sortBy != null && sortOrder != null) {
+                sqlBuilder.append(" ").append(getSortBy(sortBy)).append(" ").append(getSortOrder(sortOrder));
+            }
+        }
+
+        sql.setSql(sqlBuilder.toString());
+        return sql;
+    }
+
+    private boolean isFieldExist(String columnName) {
+        return queryBody.toString().contains(columnName) || queryPrimaryKey.contains(columnName);
+    }
+
+    public boolean isAttachCondition(Model<T> model) {
+        return model.get(Condition.CONDITION_BUILDER) != null;
+    }
+
+    public List<Condition> getCondition(Model<T> model, String key) {
+        if (isAttachCondition(model)) {
+            List<Condition> conditionList = (List<Condition>)model.get(Condition.CONDITION_BUILDER);
+            return conditionList.stream().filter(e -> key.equals(e.getBuilder().getMapper().apply(model)))
+                .collect(Collectors.toList());
+        }
+        List<Condition> emptyList = new ArrayList<Condition>();
+        return emptyList;
+    }
+
+    public List<Condition> getCondition(Model<T> model) {
+        return (List<Condition>)model.get(Condition.CONDITION_BUILDER);
     }
 
     private StringBuilder buildSql(Object... sqls) {
@@ -1436,23 +1362,14 @@ public class Table<T extends Model> implements Service<T> {
         }
     }
 
-    private static Map<String, Object> bean2Map(Model model) {
-        Map<String, Object> fieldMap = new HashMap<String, Object>();
-        if (model != null) {
-            Set<Entry<String, Object>> keySet = model._getAttrsEntrySet();
-            for (Entry<String, Object> key : keySet) {
-                fieldMap.put(key.getKey(), key.getValue());
-            }
-        }
-        return fieldMap;
-    }
-
     public static void setEachAlterQuantity(int setEachAlterQuantity) {
         if (setEachAlterQuantity <= 0) {
             throw new RuntimeException("Illegal eachAlterQuantity.");
         }
         eachAlterQuantity = setEachAlterQuantity;
     }
+
+    private static final Pattern pattern = Pattern.compile("[A-Z]([a-z\\d]+)?");
 
     private static String camel2Underline(String line) {
         line = line.replaceAll("class ", "");
@@ -1464,7 +1381,6 @@ public class Table<T extends Model> implements Service<T> {
         }
         line = String.valueOf(line.charAt(0)).toUpperCase().concat(line.substring(1));
         StringBuffer sb = new StringBuffer();
-        Pattern pattern = Pattern.compile("[A-Z]([a-z\\d]+)?");
         Matcher matcher = pattern.matcher(line);
         while (matcher.find()) {
             String word = matcher.group();
@@ -1514,19 +1430,14 @@ public class Table<T extends Model> implements Service<T> {
         return "";
     }
 
-    private String getValue(Object[] loopObject, int markLocation, String append) {
+    private String getWhereIn(int length) {
         StringBuilder value = new StringBuilder();
-        int index = 0;
-        for (Object loop : loopObject) {
-            loop = changeQueryValue(loop);
-            if (index != markLocation) {
-                value.append(append).append(loop);
-            } else {
-                value.append(loop);
-            }
-            index++;
+        value.append("(");
+        for (int i = 0; i < length; i++) {
+            value.append("?,");
         }
-        return value.toString();
+        String returnString = value.toString();
+        return returnString.substring(0, returnString.length() - 1) + ")";
     }
 
     private String getPrimaryValue(Object[] loopObject, int markLocation, String append) {
@@ -1542,12 +1453,65 @@ public class Table<T extends Model> implements Service<T> {
         return value.toString();
     }
 
+    public String caseType(Equation type) {
+        switch (type) {
+            case EQUAL:
+                return " = ?";
+            case LEFT_LIKE:
+                return "LIKE CONCAT('%', ?)";
+            case RIGHT_LIKE:
+                return "LIKE CONCAT(?, '%')";
+            case ALL_LIKE:
+                return "LIKE CONCAT('%', ?, '%')";
+            case LESS_THAN:
+                return " <= ?";
+            case MORE_THAN:
+                return " >= ?";
+            case LESS:
+                return " < ?";
+            case MORE:
+                return " > ?";
+            default:
+                return "= ?";
+        }
+    }
+
+    public void addPara(SqlPara sql1, SqlPara sql2) {
+        for (Object param : sql2.getPara()) {
+            sql1.addPara(param);
+        }
+    }
+
+    public SqlPara accumulate(SqlPara body, List<SqlPara> sqlParas) {
+        SqlPara[] paraArray = new SqlPara[sqlParas.size()];
+        return accumulate(body, sqlParas.toArray(paraArray));
+    }
+
+    public SqlPara accumulate(SqlPara body, SqlPara... sqlParas) {
+        StringBuilder sqlBuilder = new StringBuilder(body.getSql());
+        where(sqlBuilder);
+        Optional<String> systemId = Optional.ofNullable(RpcContext.getContext().getAttachment(SYSTEM_ID));
+        if (systemId.isPresent() && hasSystemId) {
+            sqlBuilder.append(buildSql(SQLOperation.AND, "`" + SYSTEM_ID + "`", "= ?"));
+            body.addPara(systemId.get());
+        }
+        for (SqlPara para : sqlParas) {
+            addPara(body, para);
+            sqlBuilder.append(para.getSql());
+        }
+        body.setSql(sqlBuilder.toString());
+        return body;
+    }
+
+    public void where(StringBuilder sqlBuilder) {
+        sqlBuilder.append(" ").append(SQLOperation.WHERE).append(" 1");
+    }
+
     private synchronized List<Record> findColumns(String tableName) {
         try {
-            return Db
-                .find(
-                    "SELECT COLUMN_NAME AS columnName, COLUMN_KEY AS primaryKey FROM INFORMATION_SCHEMA.COLUMNS a, (SELECT database() AS TABLE_SCHEMA)b WHERE a.table_name = ? and a.TABLE_SCHEMA = b.TABLE_SCHEMA;",
-                    tableName);
+            return Db.find(
+                "SELECT COLUMN_NAME AS columnName, COLUMN_KEY AS primaryKey FROM INFORMATION_SCHEMA.COLUMNS a, (SELECT database() AS TABLE_SCHEMA)b WHERE a.table_name = ? and a.TABLE_SCHEMA = b.TABLE_SCHEMA;",
+                tableName);
         } catch (Exception e) {
             // 使用h2数据库
             String truncateSql = "";
@@ -1570,15 +1534,17 @@ public class Table<T extends Model> implements Service<T> {
                     String[] contents = table.split("PRIMARY KEY");
                     for (String content : contents) {
                         if (content.contains("(\"") && content.contains("\")")) {
-                            primaryKeySet.add(content.trim().substring(content.indexOf("(\"") + 1,
-                                content.indexOf("\")") - 1));
+                            primaryKeySet
+                                .add(content.trim().substring(content.indexOf("(\"") + 1, content.indexOf("\")") - 1));
                         } else {
                             String[] columns = content.substring(content.indexOf("(")).split(",");
                             for (String column : columns) {
                                 if (!column.contains("\"")) {
                                     continue;
                                 }
-                                columnSet.add(column.substring(column.indexOf("\"") + 1, column.lastIndexOf("\"")));
+                                String columnName =
+                                    column.substring(column.indexOf("\"") + 1, column.lastIndexOf("\""));
+                                columnSet.add(columnName);
                             }
                         }
                     }
@@ -1587,6 +1553,10 @@ public class Table<T extends Model> implements Service<T> {
             if (columnSet.size() > 0) {
                 for (String key : columnSet) {
                     this.queryBody.append("`").append(key).append("`").append(", ");
+                    this.keyMap.put(key, "`" + key + "` = ?");
+                }
+                for (String columnName : primaryKeySet) {
+                    this.keyMap.put(columnName, "`" + columnName + "` = ?");
                 }
                 columnSet.addAll(primaryKeySet);
                 this.keySet = columnSet;

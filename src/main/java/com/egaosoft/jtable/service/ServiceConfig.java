@@ -1,12 +1,11 @@
 package com.egaosoft.jtable.service;
 
-
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 
 import com.jfinal.config.Constants;
 import com.jfinal.config.Handlers;
@@ -21,11 +20,9 @@ import com.jfinal.plugin.activerecord.tx.TxByMethodRegex;
 import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.template.Engine;
 
-
-
 public abstract class ServiceConfig extends JFinalConfig {
 
-    protected Prop myProp = mergeProp(PropKit.use("jfinal.properties"), getProp());
+    protected Prop myProp = mergeProp(getProp(), PropKit.use("jfinal.properties"));
 
     private static Prop getProp() {
         Prop myProp = null;
@@ -36,7 +33,8 @@ public abstract class ServiceConfig extends JFinalConfig {
             System.out.println(e.toString());
         }
         String jarPath = new File(jarWholePath).getParentFile().getAbsolutePath();
-        File file = new File(jarPath + "/config.properties");
+        File file = new File(jarPath + "/jfinal.properties");
+
         if (file.exists()) {
             myProp = new Prop(file);
         }
@@ -74,7 +72,8 @@ public abstract class ServiceConfig extends JFinalConfig {
     }
 
     public DruidPlugin createDruid() {
-        DruidPlugin druidPlugin = new DruidPlugin(myProp.get("jdbcUrl"), myProp.get("userName"), myProp.get("password").trim());
+        DruidPlugin druidPlugin =
+            new DruidPlugin(myProp.get("jdbcUrl"), myProp.get("userName"), myProp.get("password").trim());
         druidPlugin.setFilters(myProp.get("filters"));
         druidPlugin.setMaxActive(myProp.getInt("maxActive"));
         druidPlugin.setInitialSize(myProp.getInt("initialSize"));
@@ -91,9 +90,9 @@ public abstract class ServiceConfig extends JFinalConfig {
         druidPlugin.setLogAbandoned(myProp.getBoolean("logAbandoned"));
         return druidPlugin;
     }
-    
+
     public abstract void addPlugin(Plugins plugins);
-    
+
     public static Prop mergeProp(Prop... props) {
         Prop result = null;
         List<Prop> propListWithoutNull = new ArrayList<Prop>();
@@ -102,24 +101,29 @@ public abstract class ServiceConfig extends JFinalConfig {
                 propListWithoutNull.add(prop1);
             }
         }
-        switch (propListWithoutNull.size()) {
-            case 0:
-                return result;
-            case 1:
-                result = propListWithoutNull.get(0);
-                break;
-            default:
-                result = propListWithoutNull.get(propListWithoutNull.size() - 1);
-                for (int i = propListWithoutNull.size() - 2; i >= 0; i--) {
-                    Properties temp = propListWithoutNull.get(i).getProperties();
-                    Set<Object> keySet = temp.keySet();
-                    for (Object key : keySet) {
-                        if (StrKit.isBlank(result.get(key.toString()))) {
-                            result.getProperties().setProperty(key.toString(), temp.getProperty(key.toString()));
-                        }
-                    }
+
+        if (propListWithoutNull.size() == 0) {
+            return result;
+        }
+
+        if (propListWithoutNull.size() == 1) {
+            return propListWithoutNull.get(0);
+        }
+
+        for (Prop prop : propListWithoutNull) {
+            if (prop == null) {
+                continue;
+            }
+            if (result == null) {
+                result = prop;
+                continue;
+            }
+            Properties temp = prop.getProperties();
+            for (Entry<Object, Object> pros : temp.entrySet()) {
+                if (StrKit.isBlank(result.get(String.valueOf(pros.getKey())))) {
+                    result.getProperties().setProperty(String.valueOf(pros.getKey()), String.valueOf(pros.getValue()));
                 }
-                break;
+            }
         }
         return result;
     }

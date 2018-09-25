@@ -1,4 +1,4 @@
-package com.egaosoft.jtable.exception;
+package com.egaosoft.jtable.service;
 
 /**
  * @author DoubleCome

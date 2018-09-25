@@ -98,16 +98,18 @@ public class TransactionNode implements Serializable {
     }
 
     public TransactionNode addParameterType(String parameterType) {
-        if (null == parameterTypes)
+        if (null == parameterTypes) {
             throw new NullPointerException(
                 "parameterTypes is null,Initialize the parameterTypes before calling the addParameterType method");
+        }
         parameterTypes.add(parameterType);
         return this;
     }
 
     public TransactionNode addArg(Object arg) {
-        if (null == args)
+        if (null == args) {
             throw new NullPointerException("args is null ,Initialize the args before calling the addArg method");
+        }
         args.add(arg);
         return this;
     }

@@ -116,9 +116,10 @@ public class TransactionFlow implements Serializable {
     }
 
     public void addNode(TransactionNode node) {
-        if (null == flowNodes)
+        if (null == flowNodes) {
             throw new NullPointerException(
                 "flowNodes is null,Initialize the flowNodes before calling the addNode method");
+        }
         flowNodes.add(node);
     }
 

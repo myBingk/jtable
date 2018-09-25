@@ -1,4 +1,4 @@
-package com.egaosoft.jtable.exception;
+package com.egaosoft.jtable.service;
 
 import java.sql.SQLException;
 
@@ -90,6 +90,8 @@ public abstract class BusinessException extends RuntimeException {
                 return "反序列化对象失败";
             case 4002:
                 return "序列化对象失败";
+            case 10001:
+                return "执行结果异常";
             default:
                 return "数据库操作失败";
         }
