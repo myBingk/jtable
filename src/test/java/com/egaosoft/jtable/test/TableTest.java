@@ -110,8 +110,6 @@ public class TableTest extends TestCase {
         saveDictionary.setCreationTime(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2018-4-28 16:20:30"));
         BasicDictionary condition = new BasicDictionary();
         condition.setCreationTime(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2018-4-28 16:20:30"));
-        BasicDictionary returns = getTable().find(condition);
-        System.out.println(returns);
         Assert.assertNotNull(getTable().findList());
         Assert.assertEquals(10, getTable().findList().size());
     }
@@ -149,6 +147,10 @@ public class TableTest extends TestCase {
 
         BasicDictionary condition = new BasicDictionary();
 
+        Condition.getInstance(BasicDictionary::getNameFieldName).sort(Sort.DESC, 10).equation(Equation.ALL_LIKE)
+            .value("1").attachMe(condition);
+
+        condition.setName("2");
         List<Condition> conditionList = new ArrayList<Condition>();
         conditionList.add(Condition.getInstance(BasicDictionary::getNameFieldName).sort(Sort.DESC, 10)
             .equation(Equation.ALL_LIKE).value("1").build());

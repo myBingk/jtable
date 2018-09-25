@@ -6,10 +6,34 @@ import java.util.function.Function;
 
 import com.jfinal.plugin.activerecord.Model;
 
+/**
+ * Attach condition. Examples:Condition.getInstance(BasicDictionary::getNameFieldName).sort(Sort.DESC,
+ * 10).equation(Equation.ALL_LIKE).value("1").attachMe(condition);
+ *
+ * List<Condition> conditionList = new ArrayList<Condition>();
+ * conditionList.add(Condition.getInstance(BasicDictionary::getNameFieldName).sort(Sort.DESC, 10)
+ * .equation(Equation.ALL_LIKE).value("1").build());
+ *
+ * conditionList.add(Condition.getInstance(BasicDictionary::getCreationTimeFieldName).sort(Sort.DESC, 10)
+ * .equation(Equation.EQUAL).value(new Date()).build());
+ *
+ * Condition.attach(condition, conditionList);
+ * 
+ * @author Kangkang Zhang
+ * @date 2018年9月25日
+ */
 @SuppressWarnings("rawtypes")
 public class Condition {
 
+    /**
+     * The key of builder
+     */
     static final String CONDITION_BUILDER = "conditionBuilder";
+
+    /**
+     * if this set true, model ownself's attributes can never effective.
+     */
+    boolean IS_COVER = true;
 
     private ConditionBuilder builder;
 
@@ -21,18 +45,18 @@ public class Condition {
         return this.builder;
     }
 
-    public static class ConditionBuilder<T extends Model> {
+    public static class ConditionBuilder {
 
         private com.egaosoft.jtable.config.Operator term = com.egaosoft.jtable.config.Operator.AND;
         private com.egaosoft.jtable.config.Equation equation = com.egaosoft.jtable.config.Equation.EQUAL;
         private com.egaosoft.jtable.config.Sort sort = com.egaosoft.jtable.config.Sort.ASC;
         private int sortLevel = 0;
-        private Function<? extends T, String> mapper;
+        private Function<? extends Model, String> mapper;
         private Object value;
 
         ConditionBuilder() {}
 
-        public ConditionBuilder(Function<? extends T, String> mapper) {
+        public <T extends Model> ConditionBuilder(Function<T, String> mapper) {
             this.mapper = mapper;
         }
 
@@ -79,8 +103,9 @@ public class Condition {
             return this.sortLevel;
         }
 
-        public Function<? extends T, String> getMapper() {
-            return this.mapper;
+        @SuppressWarnings("unchecked")
+        public <T extends Model> Function<T, String> getMapper() {
+            return (Function<T, String>)this.mapper;
         }
 
         public Object getValue() {
@@ -91,14 +116,14 @@ public class Condition {
             return new Condition(this);
         }
 
-        public T attachMe(T model) {
+        public <T extends Model> T attachMe(T model) {
             return attach(model, new Condition(this));
         }
 
     }
 
     public static <T extends Model> ConditionBuilder getInstance(Function<? extends T, String> mapper) {
-        ConditionBuilder<T> conditionBuilder = new ConditionBuilder<T>(mapper);
+        ConditionBuilder conditionBuilder = new ConditionBuilder(mapper);
         return conditionBuilder;
     }
 
@@ -123,9 +148,18 @@ public class Condition {
         return model;
     }
 
-    public static <T extends Model> T attachCover(T model, List<Condition> builderList, boolean isCover) {
+    public static <T extends Model> T attachCover(T model, List<Condition> builderList) {
         model.put(CONDITION_BUILDER, builderList);
         return model;
+    }
+
+    public Condition neverCover() {
+        this.IS_COVER = false;
+        return this;
+    }
+
+    boolean getIsCover() {
+        return this.IS_COVER;
     }
 
     @SuppressWarnings("unchecked")

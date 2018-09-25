@@ -1233,6 +1233,22 @@ public class Table<T extends Model> implements Service<T> {
         return sql;
     }
 
+    private boolean isCover(T condition, String key) {
+        if (!isAttachCondition(condition)) {
+            return false;
+        }
+
+        List<Condition> attachList = getCondition(condition);
+        if (attachList.size() == 0) {
+            return false;
+        }
+
+        return attachList.stream()
+            .filter(e -> key.equals(e.getBuilder().getMapper().apply(condition)) && e.getIsCover()).findFirst()
+            .isPresent();
+
+    }
+
     private SqlPara getWhereQuery(T condition, String sortBy, String sortOrder) {
         SqlPara sql = new SqlPara();
         StringBuilder sqlBuilder = new StringBuilder();
@@ -1240,7 +1256,7 @@ public class Table<T extends Model> implements Service<T> {
 
         Set<Entry<String, Object>> entrySet = condition._getAttrsEntrySet();
         for (Entry<String, Object> entry : entrySet) {
-            if (this.keySet.contains(entry.getKey())) {
+            if (this.keySet.contains(entry.getKey()) && !isCover(condition, entry.getKey())) {
                 if (entry.getValue().getClass().isArray()) {
                     sqlBuilder.append(buildSql(SQLOperation.AND, "`" + entry.getKey() + "`", SQLOperation.IN,
                         getWhereIn(((Object[])entry.getValue()).length)));
