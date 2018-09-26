@@ -147,16 +147,16 @@ public class TableTest extends TestCase {
 
         BasicDictionary condition = new BasicDictionary();
 
-        Condition.getInstance(condition.getNameFieldName()).sort(Sort.DESC, 10).equation(Equation.ALL_LIKE).value("1")
-            .attachMe(condition);
+        Condition.getInstance(BasicDictionary.getNameFieldName()).sort(Sort.DESC, 10).equation(Equation.ALL_LIKE)
+            .value("1").attachMe(condition);
 
         condition.setName("2");
         List<Condition> conditionList = new ArrayList<Condition>();
-        conditionList.add(Condition.getInstance(condition.getNameFieldName()).sort(Sort.DESC, 10)
+        conditionList.add(Condition.getInstance(BasicDictionary.getNameFieldName()).sort(Sort.DESC, 10)
             .equation(Equation.ALL_LIKE).value("1").build());
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        conditionList.add(Condition.getInstance(condition.getCreationTimeFieldName()).sort(Sort.DESC, 10)
+        conditionList.add(Condition.getInstance(BasicDictionary.getCreationTimeFieldName()).sort(Sort.DESC, 10)
             .equation(Equation.EQUAL).value(sdf.parse("2018-04-28 16:20:30")).build());
 
         Condition.attach(condition, conditionList);
@@ -164,7 +164,7 @@ public class TableTest extends TestCase {
             .get(0).getDictionaryId());
 
         List<Condition> conditionList2 = new ArrayList<Condition>();
-        conditionList2.add(Condition.getInstance(condition.getNameFieldName()).sort(Sort.DESC, 10)
+        conditionList2.add(Condition.getInstance(BasicDictionary.getNameFieldName()).sort(Sort.DESC, 10)
             .equation(Equation.EQUAL).value("3").build());
 
         Condition.attach(condition, conditionList2);

@@ -11,8 +11,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getDictionaryIdFieldName() {
-        return "dictionaryId";
+    private static final String dictionaryId = "dictionaryId";
+
+    public static String getDictionaryIdFieldName() {
+        return dictionaryId;
     }
 
     public M setDictionaryIdArray(java.lang.Long[] dictionaryIdArray) {
@@ -29,8 +31,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getSystemIdFieldName() {
-        return "systemId";
+    private static final String systemId = "systemId";
+
+    public static String getSystemIdFieldName() {
+        return systemId;
     }
 
     public M setSystemIdArray(java.lang.Long[] systemIdArray) {
@@ -47,8 +51,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getNameFieldName() {
-        return "name";
+    private static final String name = "name";
+
+    public static String getNameFieldName() {
+        return name;
     }
 
     public M setNameArray(java.lang.String[] nameArray) {
@@ -65,8 +71,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getValueFieldName() {
-        return "value";
+    private static final String value = "value";
+
+    public static String getValueFieldName() {
+        return value;
     }
 
     public M setValueArray(java.lang.String[] valueArray) {
@@ -83,8 +91,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getCodeFieldName() {
-        return "code";
+    private static final String code = "code";
+
+    public static String getCodeFieldName() {
+        return code;
     }
 
     public M setCodeArray(java.lang.String[] codeArray) {
@@ -101,8 +111,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getDescriptionFieldName() {
-        return "description";
+    private static final String description = "description";
+
+    public static String getDescriptionFieldName() {
+        return description;
     }
 
     public M setDescriptionArray(java.lang.String[] descriptionArray) {
@@ -119,8 +131,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getParentIdFieldName() {
-        return "parentId";
+    private static final String parentId = "parentId";
+
+    public static String getParentIdFieldName() {
+        return parentId;
     }
 
     public M setParentIdArray(java.lang.Long[] parentIdArray) {
@@ -137,8 +151,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getOrderByFieldName() {
-        return "orderBy";
+    private static final String orderBy = "orderBy";
+
+    public static String getOrderByFieldName() {
+        return orderBy;
     }
 
     public M setOrderByArray(java.lang.Integer[] orderByArray) {
@@ -155,8 +171,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getCreationTimeFieldName() {
-        return "creationTime";
+    private static final String creationTime = "creationTime";
+
+    public static String getCreationTimeFieldName() {
+        return creationTime;
     }
 
     public M setCreationTimeArray(java.util.Date[] creationTimeArray) {
@@ -173,8 +191,10 @@ public abstract class BaseBasicDictionary<M extends BaseBasicDictionary<M>> exte
         return (M)this;
     }
 
-    public String getUpdateTimeFieldName() {
-        return "updateTime";
+    private static final String updateTime = "updateTime";
+
+    public static String getUpdateTimeFieldName() {
+        return updateTime;
     }
 
     public M setUpdateTimeArray(java.util.Date[] updateTimeArray) {
