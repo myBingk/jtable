@@ -1243,8 +1243,7 @@ public class Table<T extends Model> implements Service<T> {
             return false;
         }
 
-        return attachList.stream()
-            .filter(e -> key.equals(e.getBuilder().getMapper().apply(condition)) && e.getIsCover()).findFirst()
+        return attachList.stream().filter(e -> key.equals(e.getBuilder().getFieldName()) && e.getIsCover()).findFirst()
             .isPresent();
 
     }
@@ -1287,7 +1286,7 @@ public class Table<T extends Model> implements Service<T> {
 
         attachList.stream().forEach(attach -> {
 
-            String key = (String)attach.getBuilder().getMapper().apply(condition);
+            String key = (String)attach.getBuilder().getFieldName();
             Object value = attach.getBuilder().getValue() == null ? condition.get(key) : attach.getBuilder().getValue();
 
             if (value.getClass().isArray()) {
@@ -1313,7 +1312,7 @@ public class Table<T extends Model> implements Service<T> {
         });
 
         attachList.stream().filter(e -> e.getBuilder().getSortLevel() != 0).forEach(attach -> {
-            sortBuilder.append("`" + attach.getBuilder().getMapper().apply(condition) + "`").append(" ")
+            sortBuilder.append("`" + attach.getBuilder().getFieldName() + "`").append(" ")
                 .append(attach.getBuilder().getSort()).append(", ");
         });
 
@@ -1344,7 +1343,7 @@ public class Table<T extends Model> implements Service<T> {
     public List<Condition> getCondition(Model<T> model, String key) {
         if (isAttachCondition(model)) {
             List<Condition> conditionList = (List<Condition>)model.get(Condition.CONDITION_BUILDER);
-            return conditionList.stream().filter(e -> key.equals(e.getBuilder().getMapper().apply(model)))
+            return conditionList.stream().filter(e -> key.equals(e.getBuilder().getFieldName()))
                 .collect(Collectors.toList());
         }
         List<Condition> emptyList = new ArrayList<Condition>();

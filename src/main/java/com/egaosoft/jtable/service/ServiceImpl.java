@@ -298,9 +298,8 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     }
 
     @Override
-    public boolean
-        updateWithTransactionForList(T model, @SuppressWarnings("unchecked") List<? extends Model>... models)
-            throws BusinessException {
+    public boolean updateWithTransactionForList(T model, @SuppressWarnings("unchecked") List<? extends Model>... models)
+        throws BusinessException {
         if (isAssignmentAble()) {
             model = assignment(0, model);
             models = assignment(1, models);
@@ -410,9 +409,8 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
     }
 
     @Override
-    public Page<T>
-        findListInPageWithKeywords(int pageNumber, int pageSize, T condition, String sortBy, String sortOrder)
-            throws BusinessException {
+    public Page<T> findListInPageWithKeywords(int pageNumber, int pageSize, T condition, String sortBy,
+        String sortOrder) throws BusinessException {
         Page<T> result = getTable().findListInPageWithKeywords(pageNumber, pageSize, condition, sortBy, sortOrder);
         return result;
     }
@@ -612,8 +610,8 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
         }
 
         String method = node.getClassName() + "." + node.getMethodName();
-        LOGGER.info("流程[" + flowName + "]-节点[" + flow.getIndex() + "]，方法[" + method + "]执行时间:"
-            + System.currentTimeMillis());
+        LOGGER.info(
+            "流程[" + flowName + "]-节点[" + flow.getIndex() + "]，方法[" + method + "]执行时间:" + System.currentTimeMillis());
 
         flow.nextNode();
         RpcContext.getContext().setAttachment(SYSTEM_ID_KEY, RpcContext.getContext().getAttachment(SYSTEM_ID_KEY));

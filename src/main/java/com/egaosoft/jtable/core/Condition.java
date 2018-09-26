@@ -2,7 +2,6 @@ package com.egaosoft.jtable.core;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 import com.jfinal.plugin.activerecord.Model;
 
@@ -23,7 +22,9 @@ import com.jfinal.plugin.activerecord.Model;
  * @date 2018年9月25日
  */
 @SuppressWarnings("rawtypes")
-public class Condition {
+public class Condition implements java.io.Serializable {
+
+    private static final long serialVersionUID = -4842083479766740544L;
 
     /**
      * The key of builder
@@ -37,6 +38,8 @@ public class Condition {
 
     private ConditionBuilder builder;
 
+    Condition() {}
+
     Condition(ConditionBuilder builder) {
         this.builder = builder;
     }
@@ -45,19 +48,21 @@ public class Condition {
         return this.builder;
     }
 
-    public static class ConditionBuilder {
+    public static class ConditionBuilder implements java.io.Serializable {
+
+        private static final long serialVersionUID = -1331097267142616814L;
 
         private com.egaosoft.jtable.config.Operator term = com.egaosoft.jtable.config.Operator.AND;
         private com.egaosoft.jtable.config.Equation equation = com.egaosoft.jtable.config.Equation.EQUAL;
         private com.egaosoft.jtable.config.Sort sort = com.egaosoft.jtable.config.Sort.ASC;
         private int sortLevel = 0;
-        private Function<? extends Model, String> mapper;
+        private String fieldName;
         private Object value;
 
         ConditionBuilder() {}
 
-        public <T extends Model> ConditionBuilder(Function<T, String> mapper) {
-            this.mapper = mapper;
+        public <T extends Model> ConditionBuilder(String fieldName) {
+            this.fieldName = fieldName;
         }
 
         public ConditionBuilder equation(com.egaosoft.jtable.config.Equation equation) {
@@ -103,9 +108,8 @@ public class Condition {
             return this.sortLevel;
         }
 
-        @SuppressWarnings("unchecked")
-        public <T extends Model> Function<T, String> getMapper() {
-            return (Function<T, String>)this.mapper;
+        public String getFieldName() {
+            return this.fieldName;
         }
 
         public Object getValue() {
@@ -116,14 +120,16 @@ public class Condition {
             return new Condition(this);
         }
 
-        public <T extends Model> T attachMe(T model) {
-            return attach(model, new Condition(this));
+        public <T extends Model> Condition attachMe(T model) {
+            Condition condition = new Condition(this);
+            attach(model, condition);
+            return condition;
         }
 
     }
 
-    public static <T extends Model> ConditionBuilder getInstance(Function<? extends T, String> mapper) {
-        ConditionBuilder conditionBuilder = new ConditionBuilder(mapper);
+    public static <T extends Model> ConditionBuilder getInstance(String fieldName) {
+        ConditionBuilder conditionBuilder = new ConditionBuilder(fieldName);
         return conditionBuilder;
     }
 
@@ -165,18 +171,9 @@ public class Condition {
     @SuppressWarnings("unchecked")
     private static <T extends Model> List<Condition> accumulate(T model, List<Condition> builderList) {
         if (model.get(CONDITION_BUILDER) != null) {
-            Object original = model.get(CONDITION_BUILDER);
-            List<Condition> originalList = new ArrayList<Condition>();
-            if (original instanceof Condition) {
-                originalList.add((Condition)original);
-                originalList.addAll(builderList);
-                return originalList;
-            }
-            if (original instanceof List) {
-                originalList = (List<Condition>)original;
-                originalList.addAll(builderList);
-                return originalList;
-            }
+            List<Condition> originalList = (List<Condition>)model.get(Condition.CONDITION_BUILDER);
+            originalList.addAll(builderList);
+            return originalList;
         }
         return builderList;
     }
