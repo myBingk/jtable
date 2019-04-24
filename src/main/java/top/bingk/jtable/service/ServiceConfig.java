@@ -91,6 +91,13 @@ public abstract class ServiceConfig extends JFinalConfig {
         return druidPlugin;
     }
 
+    /**
+     * 添加JFinal插件
+     *
+     * @param plugins 需要额外添加的jfinal插件
+     * Create Time 2019年4月24日
+     * @version 1.0.0
+     */
     public abstract void addPlugin(Plugins plugins);
 
     public static Prop mergeProp(Prop... props) {

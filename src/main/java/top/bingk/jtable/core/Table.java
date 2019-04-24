@@ -21,13 +21,6 @@ import java.util.stream.Collectors;
 import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
 import com.alibaba.dubbo.rpc.RpcContext;
-import top.bingk.jtable.config.Equation;
-import top.bingk.jtable.config.Operator;
-import top.bingk.jtable.config.SQLOperation;
-import top.bingk.jtable.service.BusinessException;
-import top.bingk.jtable.service.DatabaseException;
-import top.bingk.jtable.service.IllegalAgumentException;
-import top.bingk.jtable.service.Service;
 import com.jfinal.kit.StrKit;
 import com.jfinal.plugin.activerecord.ActiveRecordException;
 import com.jfinal.plugin.activerecord.Db;
@@ -36,6 +29,14 @@ import com.jfinal.plugin.activerecord.Model;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.SqlPara;
+
+import top.bingk.jtable.config.Equation;
+import top.bingk.jtable.config.Operator;
+import top.bingk.jtable.config.SQLOperation;
+import top.bingk.jtable.service.BusinessException;
+import top.bingk.jtable.service.DatabaseException;
+import top.bingk.jtable.service.IllegalAgumentException;
+import top.bingk.jtable.service.Service;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class Table<T extends Model> implements Service<T> {
@@ -106,7 +107,7 @@ public class Table<T extends Model> implements Service<T> {
 
     public static <T extends Model> Table<T> newInstance(Class<T> modelClass) {
         if (TableManager.hasTable(modelClass)) {
-            return (Table<T>)TableManager.get(modelClass);
+            return TableManager.get(modelClass);
         }
         Table<T> table = new Table<T>(modelClass);
         TableManager.set(modelClass, table);
@@ -841,7 +842,7 @@ public class Table<T extends Model> implements Service<T> {
     public List<T> findForAny(Object... args) throws BusinessException {
         SqlPara sql = accumulate(getSelectBody(), getWhere(args));
         try {
-            return (List<T>)tableModel.find(sql);
+            return tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败，可能原因：列数或数据格式不正确。", e);
@@ -875,7 +876,7 @@ public class Table<T extends Model> implements Service<T> {
 
         SqlPara sql = accumulate(getSelectBody(), getPrimaryWhereQuery(idSet));
         try {
-            return (List<T>)tableModel.find(sql);
+            return tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -896,7 +897,7 @@ public class Table<T extends Model> implements Service<T> {
         }
         SqlPara sql = accumulate(getSelectBody(), sqlParaList);
         try {
-            return (List<T>)tableModel.find(sql);
+            return tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -909,7 +910,7 @@ public class Table<T extends Model> implements Service<T> {
     public List<T> findList() throws BusinessException {
         SqlPara sql = accumulate(getSelectBody());
         try {
-            return (List<T>)tableModel.find(sql);
+            return tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -923,7 +924,7 @@ public class Table<T extends Model> implements Service<T> {
         SqlPara sql = accumulate(getSelectBody(), getWhereQuery(condition, null, null));
         condition.remove(Condition.CONDITION_BUILDER);
         try {
-            return (List<T>)tableModel.find(sql);
+            return tableModel.find(sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -936,7 +937,7 @@ public class Table<T extends Model> implements Service<T> {
     public Page<T> findListInPage(int pageNumber, int pageSize) throws BusinessException {
         SqlPara sql = accumulate(getSelectBody());
         try {
-            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sql);
+            return tableModel.paginate(pageNumber, pageSize, sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -950,7 +951,7 @@ public class Table<T extends Model> implements Service<T> {
         SqlPara sql = accumulate(getSelectBody(), getWhereQuery(condition, null, null));
         condition.remove(Condition.CONDITION_BUILDER);
         try {
-            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sql);
+            return tableModel.paginate(pageNumber, pageSize, sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -966,7 +967,7 @@ public class Table<T extends Model> implements Service<T> {
         sql.setSql(sql.getSql() + getSortBy(sortBy) + getSortOrder(sortOrder));
         try {
 
-            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sql);
+            return tableModel.paginate(pageNumber, pageSize, sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -982,7 +983,7 @@ public class Table<T extends Model> implements Service<T> {
         SqlPara sql = accumulate(getSelectBody(), getWhereQuery(condition, sortBy, sortOrder));
         condition.remove(Condition.CONDITION_BUILDER);
         try {
-            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sql);
+            return tableModel.paginate(pageNumber, pageSize, sql);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -997,7 +998,7 @@ public class Table<T extends Model> implements Service<T> {
      * @param body 查询体
      * @param where 查询条件
      * @return 查询结果
-     * @throws BusinessExceptionv 不符合规范的sql语句及条件进行操作时将抛出
+     * @throws BusinessException 不符合规范的sql语句及条件进行操作时将抛出
      * @version 2.0
      * @author DoubleCome
      */
@@ -1007,7 +1008,7 @@ public class Table<T extends Model> implements Service<T> {
         }
         StringBuilder sql = buildSql(body, where);
         try {
-            return (List<T>)tableModel.find(sql.toString());
+            return tableModel.find(sql.toString());
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -1029,7 +1030,7 @@ public class Table<T extends Model> implements Service<T> {
     public List<T> findList(String body, String where) throws BusinessException {
         StringBuilder sql = buildSql(SQLOperation.SELECT, body, SQLOperation.FROM, this.queryTableName, where);
         try {
-            return (List<T>)tableModel.find(sql.toString());
+            return tableModel.find(sql.toString());
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -1041,6 +1042,8 @@ public class Table<T extends Model> implements Service<T> {
     /**
      * 接近于sql语句直接查询，可适配多数情况
      * 
+     * @param pageNumber 当前页码
+     * @param pageSize 每页条数
      * @param body 查询体
      * @param where 查询条件
      * @return 查询结果
@@ -1053,7 +1056,7 @@ public class Table<T extends Model> implements Service<T> {
         SqlPara sqlPara = new SqlPara();
         sqlPara.setSql(sql.toString());
         try {
-            return (Page<T>)tableModel.paginate(pageNumber, pageSize, sqlPara);
+            return tableModel.paginate(pageNumber, pageSize, sqlPara);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -1085,7 +1088,7 @@ public class Table<T extends Model> implements Service<T> {
     public List<T> findList(String key, Map<?, ?> data) throws BusinessException {
         SqlPara sqlPara = Db.getSqlPara(key, data);
         try {
-            return (List<T>)tableModel.dao().find(sqlPara);
+            return tableModel.dao().find(sqlPara);
         } catch (ActiveRecordException e) {
             if (LOGGER.isErrorEnabled()) {
                 LOGGER.error("数据查询失败", e);
@@ -1286,7 +1289,7 @@ public class Table<T extends Model> implements Service<T> {
 
         attachList.stream().forEach(attach -> {
 
-            String key = (String)attach.getBuilder().getFieldName();
+            String key = attach.getBuilder().getFieldName();
             Object value = attach.getBuilder().getValue() == null ? condition.get(key) : attach.getBuilder().getValue();
 
             if (value.getClass().isArray()) {

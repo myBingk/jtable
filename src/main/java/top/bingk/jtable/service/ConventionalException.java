@@ -4,7 +4,7 @@ package top.bingk.jtable.service;
  * 常规异常
  * 
  * @author DoubleCome
- * @date 2018年7月6日
+ * Create Time 2018年7月6日
  */
 public class ConventionalException extends BusinessException {
 

@@ -8,7 +8,7 @@ import com.jfinal.plugin.activerecord.ActiveRecordException;
  * 业务异常
  * 
  * @author DoubleCome
- * @date 2018年7月6日 下午2:12:54
+ * Create Time 2018年7月6日 下午2:12:54
  */
 public class DatabaseException extends BusinessException {
 

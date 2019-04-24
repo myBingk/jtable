@@ -6,7 +6,7 @@ import com.jfinal.plugin.activerecord.ActiveRecordException;
 
 /**
  * @author DoubleCome
- * @date 2018年7月6日 下午2:32:39
+ * Create Time 2018年7月6日 下午2:32:39
  */
 public abstract class BusinessException extends RuntimeException {
 

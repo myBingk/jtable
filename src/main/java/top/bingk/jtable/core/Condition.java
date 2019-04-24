@@ -9,7 +9,7 @@ import com.jfinal.plugin.activerecord.Model;
  * Attach condition. Examples:Condition.getInstance(BasicDictionary::getNameFieldName).sort(Sort.DESC,
  * 10).equation(Equation.ALL_LIKE).value("1").attachMe(condition);
  *
- * List<Condition> conditionList = new ArrayList<Condition>();
+ * List&lt;Condition&gt; conditionList = new ArrayList&lt;Condition&gt;();
  * conditionList.add(Condition.getInstance(BasicDictionary::getNameFieldName).sort(Sort.DESC, 10)
  * .equation(Equation.ALL_LIKE).value("1").build());
  *
@@ -18,8 +18,7 @@ import com.jfinal.plugin.activerecord.Model;
  *
  * Condition.attach(condition, conditionList);
  * 
- * @author Kangkang Zhang
- * @date 2018年9月25日
+ * @author Kangkang Zhang Create Time 2018年9月25日
  */
 @SuppressWarnings("rawtypes")
 public class Condition implements java.io.Serializable {

@@ -15,7 +15,7 @@ import com.jfinal.plugin.activerecord.Model;
  * 通用接口拦截器
  * 
  * @author DoubleCome
- * @date 2018年7月12日 上午10:46:28
+ * Create Time 2018年7月12日 上午10:46:28
  */
 public class ServiceFilter implements Filter {
 

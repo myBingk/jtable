@@ -26,7 +26,7 @@ import junit.framework.Assert;
  * table对象测试用例
  * 
  * @author DoubleCome
- * @date 2018年7月2日 下午2:55:23
+ * Create Time 2018年7月2日 下午2:55:23
  */
 public class TableTest extends TestCase {
 

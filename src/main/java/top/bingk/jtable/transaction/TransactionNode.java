@@ -9,8 +9,7 @@ import java.util.Map;
 /**
  * 流程工具类，节点
  * 
- * @author yujiaxin
- * @date 2018年7月2日
+ * @author yujiaxin Create Time 2018年7月2日
  */
 public class TransactionNode implements Serializable {
 
@@ -35,6 +34,7 @@ public class TransactionNode implements Serializable {
 
     /**
      * @param serviceConfig the serviceConfig to set
+     * @return 单个事物节点
      */
     public TransactionNode setServiceConfig(Map<String, Object> serviceConfig) {
         this.serviceConfig = serviceConfig;

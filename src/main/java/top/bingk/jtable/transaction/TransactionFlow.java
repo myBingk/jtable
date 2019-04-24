@@ -8,8 +8,7 @@ import java.util.Map;
 /**
  * 流程工具类，流程
  * 
- * @author yujiaxin
- * @date 2018年7月2日
+ * @author yujiaxin Create Time 2018年7月2日
  */
 public class TransactionFlow implements Serializable {
 
@@ -95,11 +94,11 @@ public class TransactionFlow implements Serializable {
     }
 
     /**
-     * Before calling {@link TransactionFlow#getNode()}, you need to call this method to check if there are any
+     * Before calling {@link TransactionFlow#nextNode()}, you need to call this method to check if there are any
      * transaction nodes that need to be executed. If the return value is false, there is no node to execute, and you
      * cannot call the getNode method.
      * 
-     * @return
+     * @return 结束标识
      */
     public boolean isFinish() {
         if (index >= flowNodes.size()) {

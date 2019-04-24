@@ -13,7 +13,7 @@ import com.jfinal.plugin.activerecord.Page;
  * dubbo服务异常处理
  * 
  * @author DoubleCome
- * @date 2018年7月9日 下午1:26:30
+ * Create Time 2018年7月9日 下午1:26:30
  */
 @SuppressWarnings("rawtypes")
 public class ServiceMock<T extends Model> implements Service<T> {

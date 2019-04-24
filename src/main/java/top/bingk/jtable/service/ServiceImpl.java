@@ -7,21 +7,21 @@ import java.util.Optional;
 import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
 import com.alibaba.dubbo.rpc.RpcContext;
+import com.jfinal.plugin.activerecord.Model;
+import com.jfinal.plugin.activerecord.Page;
+
 import top.bingk.jtable.core.Table;
 import top.bingk.jtable.dubbo.filter.ServiceFilter;
 import top.bingk.jtable.transaction.FlowActuator;
 import top.bingk.jtable.transaction.FlowKit;
 import top.bingk.jtable.transaction.TransactionFlow;
 import top.bingk.jtable.transaction.TransactionNode;
-import com.jfinal.plugin.activerecord.Model;
-import com.jfinal.plugin.activerecord.Page;
 
 /**
  * 基础实现类
  * 
  * @author DoubleCome
- * @since 2.0
- * @date 2018年7月2日 下午5:23:14
+ * @since 2.0 Create Time 2018年7月2日 下午5:23:14
  */
 @SuppressWarnings("rawtypes")
 public abstract class ServiceImpl<T extends Model> implements Service<T> {
@@ -631,6 +631,14 @@ public abstract class ServiceImpl<T extends Model> implements Service<T> {
         return null;
     }
 
+    /**
+     * 重新getTable，拿到具体操作的model对象
+     *
+     * Create Time 2019年4月24日
+     * 
+     * @version 1.0.0
+     * @return model操作对象
+     */
     public abstract Table<T> getTable();
 
 }

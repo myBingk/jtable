@@ -11,7 +11,7 @@ import com.jfinal.plugin.activerecord.Page;
  * dubbo本地伪装，用于调用服务前的拦截操作
  * 
  * @author DoubleCome
- * @date 2018年7月9日 下午1:26:48
+ * Create Time 2018年7月9日 下午1:26:48
  */
 @SuppressWarnings("rawtypes")
 public class ServiceStub<T extends Model> implements Service<T> {

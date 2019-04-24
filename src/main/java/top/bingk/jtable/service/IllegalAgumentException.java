@@ -2,7 +2,7 @@ package top.bingk.jtable.service;
 
 /**
  * @author DoubleCome
- * @date 2018年7月6日 下午3:36:36
+ * Create Time 2018年7月6日 下午3:36:36
  */
 public class IllegalAgumentException extends BusinessException {
 

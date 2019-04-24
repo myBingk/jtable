@@ -90,7 +90,8 @@ public class TestCase {
 
         conn = DbKit.getConfig().getDataSource().getConnection();
         DbKit.getConfig().setThreadLocalConnection(conn);
-        conn.setAutoCommit(false);// 自动提交变成false
+        // 自动提交变成false
+        conn.setAutoCommit(false);
 
     }
 

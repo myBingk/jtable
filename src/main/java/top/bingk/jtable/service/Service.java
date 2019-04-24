@@ -80,9 +80,9 @@ public interface Service<T extends Model> {
     public boolean saveWithTransactionForList(T model, List<? extends Model>... models) throws BusinessException;
 
     /**
-     * 插入多条数据，插入值按照数据表列的设计顺序，请控制每个位置上的类型和列数。 List<Object>中的Object并不是一个完整的插入对象，只是一列的多条数据，并行数列。
+     * 插入多条数据，插入值按照数据表列的设计顺序，请控制每个位置上的类型和列数。 List&lt;Object&gt;中的Object并不是一个完整的插入对象，只是一列的多条数据，并行数列。
      * 
-     * @param args
+     * @param args 需要插入的对象
      * @return 插入结果
      * @throws BusinessException 当主键重复、组合主键、类型不匹配、列数不匹配、非空值为空且无默认值时抛出。
      * @author DoubleCome
@@ -93,7 +93,7 @@ public interface Service<T extends Model> {
     /**
      * 插入多条数据，插入数据时判断数据表中除主键外是否存在相同值，存在时， 不再重复插入，且抛出异常(throw new BusinessException)。
      * 
-     * @param model 需要插入的对象
+     * @param modelList 需要插入的对象
      * @param noRepetition 不想重复的值, 全列匹配,即全表唯一。
      * @return 插入结果
      * @throws BusinessException 当传入参数非法时抛出
@@ -105,7 +105,7 @@ public interface Service<T extends Model> {
     /**
      * 插入多条数据，并根据map内的键匹配表格对应列表，且值为不想重复的值数组。
      * 
-     * @param model 需要插入的对象
+     * @param modelList 需要插入的对象
      * @param noRepetitionMap 键为列名，值为不想重复的数组
      * @return 插入结果
      * @throws BusinessException 当传入参数非法时抛出
@@ -188,7 +188,7 @@ public interface Service<T extends Model> {
      * 删除一条数据，删除需要同时删除的数据
      * 
      * @param model 需要删除的对象
-     * @param models 同时需要删除的对象
+     * @param modelLists 同时需要删除的对象
      * @return 删除结果
      * @throws BusinessException 当参数不合法、数据库操作异常时抛出
      * @author DoubleCome
@@ -257,7 +257,7 @@ public interface Service<T extends Model> {
     /**
      * 无条件删除全表数据
      * 
-     * @return
+     * @return 删除结果
      * @throws BusinessException 数据库异常
      * @author DoubleCome
      * @since 2.0
@@ -350,7 +350,7 @@ public interface Service<T extends Model> {
      * 修改多条数据
      * 
      * @param modelList 需要修改的主数据
-     * @param models 需要同时修改的其它数据
+     * @param modelLists 需要同时修改的其它数据
      * @return 修改结果，任一结果修改失败，事务回滚，返回false
      * @throws BusinessException 当参数非法，数据库操作异常时抛出
      * @author DoubleCome
@@ -477,9 +477,8 @@ public interface Service<T extends Model> {
      * @author DoubleCome
      * @since 1.0
      */
-    public Page<T>
-        findListInPageWithKeywords(int pageNumber, int pageSize, T condition, String sortBy, String sortOrder)
-            throws BusinessException;
+    public Page<T> findListInPageWithKeywords(int pageNumber, int pageSize, T condition, String sortBy,
+        String sortOrder) throws BusinessException;
 
     /**
      * 执行文件下定义好的sql语句

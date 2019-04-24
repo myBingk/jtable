@@ -1,12 +1,54 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.egaosoft</groupId>
+  <groupId>com.github</groupId>
   <artifactId>jtable</artifactId>
-  <version>1.0.0</version>
-  <name>jtable</name>
-  <url>http://maven.apache.org</url>
+  <version>1.0.0.RELEASE</version>
+  <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+   <name>com.github.myBingk.jtabl</name>
+   <description>The DAO class that encapsulates JFinal provides database extension operations, provides an exception chain, supports distributed transaction rollback, provides a process chain, provides basic database operations, and protects complex conditional constructs.</description>
+   <url>https://github.com/myBingk/jtable.git</url>
   
+    <licenses>
+       <license>
+          <name>The Apache Software License, Version 2.0</name>
+          <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+          <distribution>actable</distribution>
+       </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>17305783120</name>
+            <email>1521506029@qq.com</email>
+            <organization>zhangkangkang</organization>
+            <url>https://github.com/myBingk/jtable.git</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>https://github.com/myBingk/jtable.git</connection>
+        <developerConnection>https://github.com/myBingk/jtable.git</developerConnection>
+        <url>https://github.com/myBingk/jtable.git</url>
+        <tag>1.0.0</tag>
+    </scm>
+    <distributionManagement>
+        <snapshotRepository>
+          <id>sonatype</id>
+          <name>OSS Snapshots Repository</name>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>  
+        </snapshotRepository>
+        <repository>
+          <id>staging</id>
+          <name>OSS Staging Repository</name>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+      </distributionManagement>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
